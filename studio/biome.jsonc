@@ -1,0 +1,15 @@
+// Biome's project root, which exists only so the child configs under `apps/` and
+// `packages/` are legal.
+//
+// Biome 2 refuses a nested *root* configuration: opening this repo in an editor
+// makes the LSP scan from here, find the board's config, reject it, and fall back to
+// built-in defaults - silently, so Tailwind's `@theme` reads as a syntax error and
+// the `src/components/ui/**` lint-disable override stops applying. Declaring the
+// root here and `"root": false` there makes each one a child project instead.
+//
+// Only the TypeScript workspaces are Biome's to check: the rest of this repo is
+// LaTeX, Markdown, Python and vendored agent skills.
+{
+	"root": true,
+	"files": { "includes": ["apps/**", "packages/**"] }
+}

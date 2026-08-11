@@ -1,0 +1,858 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+/* Archivo carries a width axis (62–125%), which the `label` register uses. */
+@import "@fontsource-variable/archivo/standard.css";
+/* Numerals and measured values only — scores, dates, counts. A second family
+   rather than a monospace: the point is that a measured value reads as measured,
+   and Geist's narrower, straighter digits do that beside Archivo without dragging
+   a code-editor voice into a board of postings. */
+@import "@fontsource-variable/geist";
+/* Documents only. Archivo is cut for labels and 12px card lines; a CV read
+   end to end needs a text face, and the optical-size axis is why this cut
+   rather than another. */
+@import "@fontsource-variable/source-serif-4/opsz.css";
+@import "@fontsource-variable/source-serif-4/opsz-italic.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── The system ──────────────────────────────────────────────────────────────
+   Elevation is lightness. Three planes in fixed order — background < surface <
+   card — each a real lightness step, edged with a hairline. Nothing on the board
+   is beveled, embossed or lit; a card reads as a card because it is lighter than
+   the track it sits in and carries a border.
+
+   One shadow exists in this build (`elev-float`) and it is spent only on objects
+   genuinely detached from the page: popovers, dialogs, the dock, a grabbed card.
+   Anything at rest gets a plane and a hairline, never a shadow.
+
+   Every neutral runs on one hue (264) at chroma 0.002–0.008, so the whole
+   surface reads as one material without a single gradient. */
+
+@theme {
+    /* Redefining the theme keys rather than adding new ones means every existing
+       `ease-out` utility picks these up, and so does bare `transition-colors`
+       via --default-transition-timing-function. */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+
+    /* The rail's fixed footprint. It reflows nothing, so the sections beside it
+       pay for it as a fixed inset - `pl-rail` on the board, `ml-rail` on the banner
+       above it. */
+    --spacing-rail: 3.25rem;
+
+    /* Tight, not soft. A 13–18px radius reads as a pebble; the register wants a
+       milled edge, and every step down here is a step toward precision. */
+    --radius-tile: 8px;
+    --radius-well: 10px;
+    --radius-key: 6px;
+    --radius-chip: 4px;
+
+    /* Type scale. Every size in the build comes from here, and any rung added
+       must also go into TEXT_RUNGS in src/lib/utils.ts or tailwind-merge will
+       drop it as a colour. A rung must not share a name with a `--color-*` token
+       (`title`, not `tile`) — Tailwind resolves the ambiguous class as a colour. */
+    --text-headline: 2.75rem; /* 44px — the stats page's one display figure */
+    --text-readout: 1.6875rem; /* 27px */
+    --text-module: 1.125rem; /* 18px */
+    --text-plate: 1rem; /* 16px */
+    --text-title: 0.90625rem; /* 14.5px */
+    --text-body: 0.78125rem; /* 12.5px */
+    --text-meta: 0.71875rem; /* 11.5px */
+    --text-data: 0.65625rem; /* 10.5px */
+    --text-legend: 0.59375rem; /* 9.5px */
+}
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+    /* `font-data`: scores, dates, counts, ids. Never monospace anywhere. */
+    --font-data: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+    /* `font-text`: running prose in a document, and nowhere else in the UI. */
+    --font-text: "Source Serif 4 Variable", ui-serif, Georgia, serif;
+
+    /* The planes, as utilities: bg-background / bg-surface / bg-card. */
+    --color-background: var(--background);
+    --color-surface: var(--surface);
+    --color-card: var(--card);
+    --color-card-hover: var(--card-hover);
+    --color-card-foreground: var(--foreground);
+    /* A meter groove, cut below the surface it sits in. */
+    --color-track: var(--track);
+
+    --color-foreground: var(--foreground);
+    --color-ink-2: var(--ink-2);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    /* The one accent. `signal` fills and rims, `signal-ink` is the same colour
+       corrected to clear 4.5:1 as text on every plane. */
+    --color-signal: var(--signal);
+    --color-signal-ink: var(--signal-ink);
+    --color-signal-foreground: var(--signal-foreground);
+
+    /* The lamp colours are read as `var(--lamp-*)` through the `--lamp` property,
+       never as `bg-lamp-*`, so they need no `--color-*` mapping. */
+
+    --color-border: var(--border);
+    --color-border-strong: var(--border-strong);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-destructive: var(--destructive);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+}
+
+/* ── Dark, the plate this was designed on ────────────────────────────────────
+   Near-black at oklch(0.1425). The three planes are 0.1425 / 0.178 / 0.213, and
+   every ink below clears 4.5:1 against the lightest of them (`card-hover`), so
+   no small text anywhere is dimmed with an opacity suffix.
+
+   `:root.dark`, not a bare `.dark`: both match the same `<html>` element at the
+   same specificity, so a bare class only wins by being declared after `:root`.
+   Qualifying it makes the cascade independent of the order these two blocks
+   happen to sit in, and this one is deliberately first. */
+:root.dark {
+    color-scheme: dark;
+
+    --background: oklch(0.1425 0.0045 264);
+    --surface: oklch(0.178 0.0055 264);
+    --card: oklch(0.213 0.006 264);
+    --card-hover: oklch(0.248 0.007 264);
+    --popover: oklch(0.202 0.006 264);
+    --track: oklch(0.152 0.005 264);
+    --input: oklch(0.168 0.0055 264);
+
+    /* Two weights of hairline: the ordinary edge, and the one an element reaches
+       for on hover or when it wants to be read as the active object. */
+    --border: oklch(1 0 0 / 0.075);
+    --border-strong: oklch(1 0 0 / 0.145);
+
+    --foreground: oklch(0.965 0.002 264);
+    /* Second ink — a company name, a board title, a column legend. A real colour
+       rather than `text-foreground/80`, so its contrast is a checked number. */
+    --ink-2: oklch(0.8 0.006 264);
+    --muted: var(--surface);
+    --muted-foreground: oklch(0.655 0.008 264);
+    --popover-foreground: var(--foreground);
+
+    /* A filled button on near-black is white, not a tint. */
+    --primary: oklch(0.93 0.004 264);
+    --primary-foreground: oklch(0.18 0.006 264);
+    --secondary: oklch(0.255 0.007 264);
+    --secondary-foreground: oklch(0.93 0.004 264);
+
+    --destructive: oklch(0.7 0.19 24);
+
+    /* Held off the green/amber axis the fit lamps own, or "selected" and
+       "medium fit" would read as the same signal. */
+    --signal: oklch(0.62 0.175 272);
+    --signal-ink: oklch(0.745 0.15 272);
+    /* What can be printed *on* the accent. The dark plate's signal is bright
+       enough that white on it lands near 2.5:1, so it takes dark ink. */
+    --signal-foreground: oklch(0.16 0.02 272);
+    --ring: var(--signal);
+
+    --lamp-high: oklch(0.72 0.16 158);
+    --lamp-mid: oklch(0.79 0.145 78);
+    --lamp-low: oklch(0.42 0.008 264);
+    --lamp-high-ink: oklch(0.8 0.15 160);
+    --lamp-mid-ink: oklch(0.85 0.13 80);
+
+    /* The timeline's one colour system: a hue per kind of event. Two anchors are
+       fixed by the board's own meaning and the rest are spaced around them —
+       green is the win, red is an ending, the application lane walks blue to
+       magenta as it advances, and the machine's own work (a scrape, a ranking
+       pass) stays off that lane: a scrape is bare steel, a ranking pass amber.
+       Steel and not a blue, or the commonest line on the page and an application
+       out would print as the same chip.
+
+       Each is stored at ink lightness and the chip derives its own fill by mixing
+       that ink into the plane underneath (see the `hue-chip` utility). One value
+       per hue instead of a fill and an ink, and a chip that is a tint of its own
+       colour rather than a slab of it. */
+    /* Steel sits lower than the hues it shares a chart with: it is the commonest
+       reading on the page and the least consequential, and at the others'
+       lightness it was the brightest thing on the plate. */
+    --event-found: oklch(0.65 0.014 264);
+    --event-added: oklch(0.8 0.12 195);
+    --event-ranked: oklch(0.82 0.14 82);
+    --event-applied: oklch(0.72 0.16 262);
+    --event-screening: oklch(0.72 0.17 296);
+    --event-tech: oklch(0.74 0.19 330);
+    --event-final-round: oklch(0.75 0.19 355);
+    --event-offer: oklch(0.78 0.17 155);
+    --event-closed: oklch(0.7 0.18 22);
+
+    --scrollbar-thumb: oklch(1 0 0 / 0.11);
+    --scrollbar-thumb-hover: oklch(1 0 0 / 0.22);
+
+    --elev-float:
+        0 0 0 1px var(--border-strong), 0 1px 2px -1px oklch(0 0 0 / 0.4),
+        0 12px 32px -8px oklch(0 0 0 / 0.6);
+    --elev-drag:
+        0 0 0 1px var(--signal), 0 2px 5px -2px oklch(0 0 0 / 0.45),
+        0 18px 36px -12px oklch(0 0 0 / 0.65);
+
+    --radius: 0.5rem;
+}
+
+/* ── Light, derived ──────────────────────────────────────────────────────────
+   The same three-plane order and the same hue, inverted: a grey ground, a
+   lighter track, white cards. Not a mechanical inversion — every ink and every
+   hairline is set against its own plane. */
+:root {
+    /* Scrollbars, the drag ghost's backdrop and native form chrome are painted by
+       the browser, not by these tokens. */
+    color-scheme: light;
+
+    --background: oklch(0.958 0.003 264);
+    --surface: oklch(0.978 0.002 264);
+    --card: oklch(1 0 0);
+    --card-hover: oklch(0.972 0.004 264);
+    --popover: oklch(1 0 0);
+    --track: oklch(0.925 0.005 264);
+    --input: oklch(1 0 0);
+
+    --border: oklch(0.22 0.02 264 / 0.11);
+    --border-strong: oklch(0.22 0.02 264 / 0.2);
+
+    --foreground: oklch(0.21 0.012 264);
+    --ink-2: oklch(0.35 0.013 264);
+    --muted: var(--surface);
+    --muted-foreground: oklch(0.515 0.014 264);
+    --popover-foreground: var(--foreground);
+
+    --primary: oklch(0.24 0.012 264);
+    --primary-foreground: oklch(0.98 0.002 264);
+    --secondary: oklch(0.945 0.004 264);
+    --secondary-foreground: oklch(0.26 0.012 264);
+
+    --destructive: oklch(0.52 0.21 26);
+
+    --signal: oklch(0.5 0.19 272);
+    --signal-ink: oklch(0.455 0.19 272);
+    --signal-foreground: oklch(0.99 0.005 272);
+    --ring: var(--signal);
+
+    --lamp-high: oklch(0.58 0.14 158);
+    --lamp-mid: oklch(0.68 0.14 72);
+    --lamp-low: oklch(0.72 0.008 264);
+    --lamp-high-ink: oklch(0.46 0.12 158);
+    --lamp-mid-ink: oklch(0.48 0.11 66);
+
+    --event-found: oklch(0.48 0.02 264);
+    --event-added: oklch(0.5 0.11 200);
+    --event-ranked: oklch(0.52 0.12 75);
+    --event-applied: oklch(0.48 0.19 262);
+    --event-screening: oklch(0.47 0.21 296);
+    --event-tech: oklch(0.5 0.21 330);
+    --event-final-round: oklch(0.5 0.21 355);
+    --event-offer: oklch(0.48 0.14 155);
+    --event-closed: oklch(0.51 0.2 25);
+
+    --scrollbar-thumb: oklch(0.3 0.02 264 / 0.22);
+    --scrollbar-thumb-hover: oklch(0.3 0.02 264 / 0.38);
+
+    --elev-float:
+        0 0 0 1px var(--border-strong),
+        0 1px 2px -1px oklch(0.25 0.02 264 / 0.12),
+        0 12px 32px -10px oklch(0.25 0.02 264 / 0.24);
+    --elev-drag:
+        0 0 0 1px var(--signal), 0 2px 5px -2px oklch(0.25 0.02 264 / 0.16),
+        0 18px 36px -12px oklch(0.25 0.02 264 / 0.3);
+
+    --radius: 0.5rem;
+}
+
+/* Detached from the page: a popover, a dialog, the dock, a toast. */
+@utility elev-float {
+    box-shadow: var(--elev-float);
+}
+
+/* Off the page and under the pointer: a grabbed card, an opened one. */
+@utility elev-drag {
+    box-shadow: var(--elev-drag);
+}
+
+/* All four base-ui popup primitives (popover, dropdown, select, tooltip) ask for
+   `shadow-popup`, so claiming the name here gives every one of them the float
+   elevation. */
+@utility shadow-popup {
+    box-shadow: var(--elev-float);
+}
+
+/* Two label registers, both Archivo on its width axis. `label` names a region
+   (a stage, a section, the board), `legend` names a single value inside one.
+   Condensed, uppercase and tracked is the one typographic move in this build
+   that no component library ships by default, and it is what keeps the surface
+   identifiable with every word removed. */
+@utility label {
+    font-family: var(--font-sans);
+    font-stretch: 84%;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+@utility legend {
+    font-family: var(--font-sans);
+    font-stretch: 90%;
+    font-weight: 550;
+    text-transform: uppercase;
+    letter-spacing: 0.055em;
+}
+
+/* A separator: one hairline, the same weight as every other edge on the page. */
+@utility rule {
+    height: 1px;
+    background: var(--border);
+}
+
+@utility rule-v {
+    width: 1px;
+    background: var(--border);
+}
+
+/* A status lamp: a flat dot in the colour of the reading, set per use via
+   `--lamp`, and never the sole carrier of meaning — the word is always adjacent. */
+@utility lamp {
+    border-radius: 9999px;
+    background: var(--lamp, var(--lamp-low));
+}
+
+/* A chip in one of the timeline's eight hues: a tint of its own colour with the
+   colour as its ink, rather than a saturated slab. `--evt` is set per row. */
+@utility hue-chip {
+    background: color-mix(in oklab, var(--evt) 15%, transparent);
+    color: var(--evt);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--evt) 28%, transparent);
+}
+
+/* A slug seated in a groove — the stats page's meters. Scaled rather than sized,
+   so the fill runs on the compositor and the groove's own radius shapes the
+   leading end while the trailing face stays flat.
+
+   The seating is the page's one authored motion: every meter runs the same
+   animation, staggered by an inline `animation-delay`, so the readings come up
+   in sequence instead of scattering effects across the surface. */
+@keyframes meter-seat {
+    from {
+        transform: scaleX(0);
+    }
+}
+
+@keyframes meter-rise {
+    from {
+        transform: scaleY(0);
+    }
+}
+
+@utility meter-slug {
+    transform: scaleX(var(--fill, 0));
+    transform-origin: left center;
+    /* `backwards`, so a delayed slug waits at zero rather than flashing at full. */
+    animation: meter-seat 620ms var(--ease-out) backwards;
+}
+
+@utility meter-column {
+    transform: scaleY(var(--fill, 0));
+    transform-origin: bottom center;
+    animation: meter-rise 620ms var(--ease-out) backwards;
+}
+
+/* The dial's arcs, seating the same way round: each one sweeps out of its own
+   start point. The final dash pair is inline on the element, so the keyframe only
+   has to state the empty end of it. */
+@keyframes ring-seat {
+    from {
+        stroke-dasharray: 0 var(--ring-c);
+    }
+}
+
+@utility ring-seat {
+    animation: ring-seat 620ms var(--ease-out) backwards;
+}
+
+/* Travel goes, the reading stays: the final transform is on the element itself,
+   not the keyframe, so a meter with no animation is still filled correctly. */
+@media (prefers-reduced-motion: reduce) {
+    .meter-slug,
+    .meter-column,
+    .ring-seat {
+        animation: none;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+    html {
+        /* Archivo renders heavier than drawn on macOS. */
+        @apply font-sans antialiased;
+        font-variant-numeric: tabular-nums;
+    }
+    p,
+    li {
+        text-wrap: pretty;
+    }
+    h1,
+    h2,
+    h3 {
+        text-wrap: balance;
+        letter-spacing: -0.015em;
+    }
+
+    ::selection {
+        background: color-mix(in oklab, var(--signal) 30%, transparent);
+        color: var(--foreground);
+    }
+    :root {
+        caret-color: var(--signal);
+        accent-color: var(--signal);
+    }
+    /* No track chrome; the thumb is inset so it never touches a corner radius. */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background-color: var(--scrollbar-thumb);
+        border: 3px solid transparent;
+        background-clip: content-box;
+        border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background-color: var(--scrollbar-thumb-hover);
+    }
+    ::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+}
+
+/* ── Drag ────────────────────────────────────────────────────────────────────
+   The attributes are set imperatively by src/lib/drag-state.ts, so a drag causes
+   no React renders.
+
+   Every track becomes receptive in tone only; the signal rim is reserved for the
+   one track that would actually take the drop. */
+body[data-dragging] [data-dropzone] {
+    /* The tracks carry a 150ms colour transition for ordinary hover. Easing the
+       drag affordance in reads as "the drag has not started yet", so snap it. */
+    transition: none;
+    background-color: color-mix(in oklab, var(--signal) 7%, var(--background));
+}
+
+/* The armed track. Stated here rather than as a utility class on the element: a
+   `bg-signal/10` class is specificity (0,1,0) and loses to the rule above at
+   (0,2,1), which would paint the hovered track like every other one. */
+body[data-dragging] [data-dropzone][data-over] {
+    background-color: color-mix(in oklab, var(--signal) 14%, var(--background));
+    box-shadow: inset 0 0 0 1px var(--signal);
+}
+
+/* Children must not eat dragenter/dragleave from the zone underneath them. */
+body[data-dragging] [data-dropzone] * {
+    pointer-events: none;
+}
+
+/* No card shows hover styling mid-drag; it would compete with the drop zone's own
+   highlight.
+
+   Keyed on `[data-key]`, not on a `data-slot`: base-ui's composition lets the
+   outermost trigger win the slot attribute, so a slot selector here silently
+   stopped matching the day a second trigger was added to the card. */
+body[data-dragging] [data-dropzone] [data-key]:hover {
+    background-color: var(--card);
+    border-color: var(--border);
+}
+
+/* The source card drops to the track's own plane rather than being dimmed:
+   Chromium already carries a translucent ghost under the cursor, and 45% opacity
+   dropped the card's own title to ~2.5:1. */
+body[data-dragging] [data-dropzone] [data-dragging="true"],
+body[data-dragging] [data-dropzone] [data-dragging="true"]:hover {
+    background-color: transparent;
+    border-color: var(--border);
+    border-style: dashed;
+    color: var(--muted-foreground);
+    transition: none;
+}
+
+/* The track settling after a drop. `data-seated` is set by drag-state.ts. */
+@keyframes seat {
+    from {
+        background-color: color-mix(
+            in oklab,
+            var(--signal) 13%,
+            var(--background)
+        );
+    }
+}
+
+[data-dropzone][data-seated] {
+    animation: seat 420ms var(--ease-out);
+}
+
+/* …and the card that landed, marked `data-arrived` by drag-state.ts. The rule
+   using this sits immediately after `card-in` below, and has to: the two
+   selectors are both (0,2,0), so whichever is declared later wins. Above
+   `card-in`, this animation never plays. */
+@keyframes tile-arrive {
+    from {
+        border-color: var(--signal);
+        background-color: color-mix(in oklab, var(--signal) 16%, var(--card));
+    }
+}
+
+/* An open card keeps its accent rim under the pointer. `elev-drag` and the hover
+   plane are both (0,2,0) on the tile and Tailwind emits the hover second, so the
+   rim the popover opened with was dropped the moment the pointer touched the card
+   - which is where the pointer already is. Qualified with `[data-key]` to
+   outrank it. */
+[data-key].elev-drag:hover {
+    box-shadow: var(--elev-drag);
+    border-color: transparent;
+}
+
+[data-key].elev-drag {
+    border-color: transparent;
+}
+
+/* A held card. Here rather than as a utility on the card so it survives the
+   hover plane, and stated as the border rather than as a ring: at intake density
+   an outline sits in the 6px gutter between tiles and touches its neighbours,
+   and the accent is worth exactly one pixel anywhere in this build. */
+[data-key][data-selected],
+[data-key][data-selected]:hover {
+    border-color: var(--signal);
+    background-color: color-mix(in oklab, var(--signal) 9%, var(--card));
+}
+
+/* Fires on first load and on every "Show 25 more". No stagger: at 25 rows a 40ms
+   cascade takes a full second. */
+@keyframes card-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+}
+
+[data-dropzone] > [data-key] {
+    animation: card-in 180ms var(--ease-out) backwards;
+}
+
+/* Overrides the entrance above it by equal specificity declared second — see the
+   `tile-arrive` keyframes. Do not move this above `card-in`. */
+[data-dropzone] > [data-arrived] {
+    animation: tile-arrive 400ms var(--ease-out);
+}
+
+/* Reduced motion: keep the fades, drop the travel. */
+@media (prefers-reduced-motion: reduce) {
+    @keyframes card-in {
+        from {
+            opacity: 0;
+        }
+    }
+
+    /* Colour rather than travel, so these survive — shortened, not removed. */
+    [data-dropzone][data-seated],
+    [data-dropzone] > [data-arrived] {
+        animation-duration: 200ms;
+    }
+
+    [data-slot="popover-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="select-content"],
+    [data-slot="tooltip-content"] {
+        --tw-enter-translate-x: 0;
+        --tw-enter-translate-y: 0;
+        --tw-exit-translate-x: 0;
+        --tw-exit-translate-y: 0;
+        --tw-enter-scale: 1;
+        --tw-exit-scale: 1;
+    }
+}
+
+/* ── The document sheet ──────────────────────────────────────────────────────
+   Prose, and the only place in the build set in a text face. Archivo is a UI
+   sans tuned for labels, meters and 12px card lines; a 6,000-word CV set in it
+   is the reason this page was unreadable. Source Serif carries the body on a
+   68-character measure, the app's own Archivo stays on the headings, and the
+   two together read as the app's document rather than as a preview pane.
+
+   Section breaks are hairlines, the same weight as every edge elsewhere. */
+.doc {
+    font-family: var(--font-text);
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--foreground);
+    max-width: 68ch;
+    /* The serif's own optical size axis: at 16px it wants the text cut, not the
+       display cut, and `auto` is what asks for it. */
+    font-optical-sizing: auto;
+    font-synthesis: none;
+    text-wrap: pretty;
+    hanging-punctuation: first last;
+}
+
+.doc > * + * {
+    margin-top: 0.9em;
+}
+
+/* Headings run in the UI face, and every step is size and weight — no rules, no
+   colour, no eyebrows. Space above is roughly double the space below, so a
+   heading belongs to what follows it. */
+.doc :is(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-heading);
+    font-weight: 640;
+    line-height: 1.2;
+    letter-spacing: -0.018em;
+    text-wrap: balance;
+    color: var(--foreground);
+}
+
+.doc h1 {
+    font-size: var(--text-readout);
+    margin-top: 2em;
+}
+
+.doc h2 {
+    font-size: var(--text-module);
+    margin-top: 2.4em;
+    padding-top: 1.5em;
+    border-top: 1px solid var(--border);
+}
+
+.doc h3 {
+    font-size: 1.0625rem;
+    margin-top: 1.9em;
+}
+
+.doc h4 {
+    font-size: 0.9375rem;
+    font-weight: 660;
+    color: var(--ink-2);
+    margin-top: 1.6em;
+}
+
+.doc :is(h5, h6) {
+    font-family: var(--font-sans);
+    font-stretch: 90%;
+    font-size: var(--text-body);
+    font-weight: 620;
+    text-transform: uppercase;
+    letter-spacing: 0.055em;
+    color: var(--muted-foreground);
+    margin-top: 1.6em;
+}
+
+/* The first block of a document sits against the header's rule; a second line
+   directly under it would read as a double rule. */
+.doc > :is(h1, h2, h3, h4, h5, h6):first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.doc :is(ul, ol) {
+    padding-left: 1.3em;
+}
+
+.doc ul {
+    list-style: disc;
+}
+
+.doc ol {
+    list-style: decimal;
+}
+
+.doc :is(ul, ol) :is(ul, ol) {
+    margin-top: 0.35em;
+}
+
+.doc li + li {
+    margin-top: 0.35em;
+}
+
+.doc li::marker {
+    color: var(--muted-foreground);
+}
+
+.doc ol > li::marker {
+    font-family: var(--font-data);
+    font-size: 0.85em;
+    color: var(--muted-foreground);
+}
+
+/* GFM task lists: the checkbox is a reading, not a control. */
+.doc li:has(> input[type="checkbox"]) {
+    list-style: none;
+    margin-left: -1.3em;
+}
+
+.doc input[type="checkbox"] {
+    margin-right: 0.5em;
+    accent-color: var(--signal);
+}
+
+.doc strong {
+    font-weight: 640;
+    color: var(--foreground);
+}
+
+.doc a {
+    color: var(--signal-ink);
+    text-decoration: underline;
+    text-decoration-thickness: from-font;
+    text-underline-offset: 0.18em;
+    text-decoration-color: color-mix(in oklab, var(--signal) 45%, transparent);
+    transition: text-decoration-color 150ms var(--ease-out);
+}
+
+.doc a:hover {
+    text-decoration-color: var(--signal);
+}
+
+/* Code is measurement, so it goes in the data face on the surface plane. */
+.doc code {
+    font-family: var(--font-data);
+    font-size: 0.875em;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-chip);
+    padding: 0.08em 0.32em;
+}
+
+.doc pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-key);
+    padding: 0.95em 1.1em;
+    overflow-x: auto;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+}
+
+.doc pre code {
+    background: none;
+    border: 0;
+    padding: 0;
+    font-size: 1em;
+}
+
+/* A quotation is set off by the line it hangs on, not by a slab of colour. */
+.doc blockquote {
+    padding-left: 1.15em;
+    border-left: 1px solid var(--border-strong);
+    color: var(--ink-2);
+}
+
+.doc hr {
+    border: 0;
+    height: 1px;
+    background: var(--border);
+    margin: 2.2em 0;
+}
+
+/* A markdown file that closes a section with `---` and opens the next with `##`
+   asked for one break, not two. The heading already draws its own. */
+.doc hr:has(+ :is(h1, h2, h3, h4, h5, h6)) {
+    display: none;
+}
+
+/* Tables carry counts and dates, so they run in the data face with lining
+   figures aligned; the wrapper scrolls so a wide one never drags the page. */
+.doc > .doc-table {
+    overflow-x: auto;
+    margin-top: 1.4em;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-key);
+}
+
+.doc table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: var(--font-data);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums lining-nums;
+}
+
+.doc :is(th, td) {
+    padding: 0.5em 0.85em;
+    text-align: left;
+    vertical-align: top;
+}
+
+.doc tbody tr + tr :is(th, td) {
+    border-top: 1px solid var(--border);
+}
+
+.doc th {
+    font-weight: 620;
+    color: var(--ink-2);
+    white-space: nowrap;
+}
+
+.doc thead th {
+    border-bottom: 1px solid var(--border);
+}
+
+.doc img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-key);
+}
+
+/* An entrance per document, not per element: the sheet fades up once when a
+   different file is opened, and nothing else on the page moves. */
+@media (prefers-reduced-motion: reduce) {
+    [data-doc-sheet] {
+        --tw-enter-translate-y: 0;
+    }
+}
+
+/* ── A toast in the colour of the stage it reports ───────────────────────────
+   The timeline's eight hues, on the one surface that says a stage just changed
+   (see HUE in src/lib/strip.ts). A 3px bar on the leading edge, and when the
+   write moved an entry the bar runs from the colour it left to the colour it
+   landed in - the move itself, drawn. Nothing else on the toast takes colour:
+   the bar is the one carrier, and the words still say which stage it is.
+
+   The bar is a background rather than a pseudo-element, so it needs nothing of
+   sonner's layout, and it stops short of both ends rather than being eaten by
+   the toast's corner radius.
+
+   Sonner's own rules are unlayered, so a Tailwind utility loses to them at any
+   specificity; this out-specifies the rule it has to beat instead. */
+[data-sonner-toast][data-styled="true"].toast-hue {
+    background-image: linear-gradient(
+        to bottom,
+        var(--evt-from, var(--evt)),
+        var(--evt)
+    );
+    background-repeat: no-repeat;
+    background-size: 3px calc(100% - 16px);
+    background-position: left center;
+}

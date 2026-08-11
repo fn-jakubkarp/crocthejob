@@ -1,0 +1,31 @@
+// Linter and formatter for the shared data layer. Settings match the board's, so a
+// file that moved here keeps the formatting it had.
+{
+  // A child of the repo-root config, not a root itself - see ../../biome.jsonc.
+  "root": false,
+  "$schema": "../../node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": ["*.ts", "package.json", "tsconfig.json"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "tab",
+    "lineWidth": 80
+  },
+  "javascript": {
+    "formatter": { "quoteStyle": "double" }
+  },
+  "json": {
+    "formatter": { "indentStyle": "space", "indentWidth": 2 }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended"
+    }
+  },
+  "assist": {
+    "actions": { "source": { "organizeImports": "on" } }
+  }
+}

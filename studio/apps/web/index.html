@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Croc the Job</title>
+    <script>
+      // Blocking on purpose: next-themes only applies the class after React
+      // mounts, which flashes a white frame on a dark OS.
+      try {
+        const theme = localStorage.getItem("theme") ?? "system";
+        if (
+          theme === "dark" ||
+          (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches)
+        )
+          document.documentElement.classList.add("dark");
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <!--
+      THESIS: A ruled instrument for triaging a queue. Refuses the rounded cards
+      floating in gutters that every board ships, and the bevelled neumorphic
+      plate this replaced.
+      OWN-WORLD: Near-black on one hue (264) at chroma <0.008. Three planes by
+      lightness, hairline edges, no shadow at rest. Archivo condensed-uppercase
+      labels, Geist tabular numerals, indigo accent used as ink and one pixel.
+      Radii 4/6/8/10.
+      STORY: Read a card, decide, move it. The file underneath is the truth.
+      FIRST VIEWPORT: Flush rail gutter left; columns as full-height tracks
+      divided by 1px rules; each headed by a ruled bar carrying a flat lamp, a
+      tracked label and a Geist count; flat tiles stacked at 6px.
+      FORM: Canon commitment, not a roll - the brief pinned shadcn grammar and
+      the user set Linear as the craft bar.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the
+      finish review, the verdict, and DESIGN.md
+    -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

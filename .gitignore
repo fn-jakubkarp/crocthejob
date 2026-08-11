@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+bun.lock
+# Two committed lockfiles so `bun install` is reproducible from the repo root or
+# from studio/ alone. The rule above still hides any per-app lockfile.
+!/bun.lock
+!/studio/bun.lock
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+
+# Skills lock (auto-generated)
+skills-lock.json
+
+
+# Agent skills: track the source, ignore only deps and logs.
+# (A blanket `.agents/` ignore silently drops the job-search CLI skills from the repo.)
+.agents/**/node_modules/
+.agents/**/*.log
+.agents/usage/
+
+# Brainstorm mockups (superpowers visual companion) - never ship
+.superpowers/
+
+# Web apps (studio/) - track the source, ignore build output.
+studio/apps/*/dist/
+# The standalone data location, used only when studio/ is checked out on its own.
+studio/data/
+# Temp files from an interrupted data/jobs.json write; the real file is tracked.
+data/jobs.json.tmp-*

@@ -1,0 +1,11 @@
+{
+  "name": "crocthejob",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "bun --filter web dev",
+    "build": "bun --filter web build",
+    "ci": "bun --filter '*' ci"
+  }
+}

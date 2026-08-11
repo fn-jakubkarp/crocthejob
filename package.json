@@ -1,0 +1,12 @@
+{
+  "name": "crocthejob-root",
+  "private": true,
+  "type": "module",
+  "workspaces": ["studio/apps/*", "studio/packages/*", ".agents/skills/*/cli"],
+  "scripts": {
+    "dev": "bun --filter web dev",
+    "build": "bun --filter web build",
+    "ci": "bun --filter web ci && bun --filter @jobsearch/jobs-data ci",
+    "test": "bun test studio"
+  }
+}

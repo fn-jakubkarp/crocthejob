@@ -1,0 +1,217 @@
+<!doctype html>
+<meta charset="utf-8">
+<!--
+  Source for docs/social-preview.png (1280x640, GitHub repo social preview).
+  __FONT__ is a base64 Archivo woff2, inlined at render time:
+
+    B=$(base64 -i node_modules/.bun/@fontsource-variable+archivo@*/node_modules/@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2 | tr -d '\n')
+    python3 -c "import sys,pathlib;p=pathlib.Path('docs/social-preview.src.html');pathlib.Path('/tmp/sp.html').write_text(p.read_text().replace('__FONT__',sys.argv[1]))" "$B"
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu \
+      --hide-scrollbars --screenshot=docs/social-preview.png --window-size=1280,640 file:///tmp/sp.html
+-->
+<style>
+  @font-face {
+    font-family: "Archivo Variable";
+    src: url(data:font/woff2;base64,__FONT__) format("woff2");
+    font-weight: 100 900;
+    font-stretch: 62% 125%;
+    font-display: block;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 640px; }
+  body {
+    background: #0e0f11;
+    font-family: "Archivo Variable", system-ui, sans-serif;
+    color: #f3f3f5;
+    overflow: hidden;
+    position: relative;
+  }
+  .grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size: 80px 100%;
+  }
+  .glow {
+    position: absolute;
+    width: 1000px; height: 1000px;
+    right: -280px; top: -400px;
+    background: radial-gradient(circle, rgba(99,122,238,.24) 0%, rgba(99,122,238,0) 60%);
+  }
+
+  .left {
+    position: absolute;
+    left: 76px; top: 88px;
+    width: 520px;
+  }
+  .tile {
+    width: 96px; height: 96px;
+    border-radius: 23px;
+    background: #17181c;
+    border: 1px solid #292b32;
+    display: block;
+    margin-bottom: 32px;
+  }
+  h1 {
+    font-size: 84px;
+    font-weight: 700;
+    font-stretch: 84%;
+    letter-spacing: .07em;
+    line-height: .95;
+    text-transform: uppercase;
+  }
+  .tagline {
+    margin-top: 26px;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.44;
+    color: #a9abb4;
+    max-width: none;
+  }
+  .tagline b { color: #f3f3f5; font-weight: 600; }
+  .steps {
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    font-size: 15px;
+    font-weight: 650;
+    font-stretch: 84%;
+    letter-spacing: .17em;
+    text-transform: uppercase;
+    color: #8ca5ff;
+  }
+  .steps span:nth-child(even) { color: #3d4048; }
+  .foot {
+    position: absolute;
+    left: 76px; bottom: 46px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #5f626b;
+  }
+  .foot b { color: #8a8d96; font-weight: 600; }
+
+  .app {
+    position: absolute;
+    left: 664px; top: 116px;
+    width: 700px; height: 400px;
+    background: #121316;
+    border: 1px solid #24262c;
+    border-radius: 18px 0 0 18px;
+    box-shadow: 0 40px 90px -30px rgba(0,0,0,.9);
+    overflow: hidden;
+  }
+  .appbar {
+    height: 46px;
+    border-bottom: 1px solid #1f2127;
+    display: flex; align-items: center; gap: 9px;
+    padding: 0 18px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #2c2f36; }
+  .appbar .name {
+    margin-left: 12px;
+    font-size: 11px; font-weight: 650; font-stretch: 84%;
+    letter-spacing: .16em; text-transform: uppercase; color: #6c6f79;
+  }
+  .board { display: flex; gap: 14px; padding: 22px 18px; }
+  .col { width: 162px; flex: none; display: flex; flex-direction: column; gap: 11px; }
+  .colhead {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 650; font-stretch: 84%;
+    letter-spacing: .15em; text-transform: uppercase;
+    color: #787b84; margin-bottom: 3px;
+  }
+  .colhead em {
+    font-style: normal; font-size: 10px; letter-spacing: .04em; color: #4e515a;
+  }
+  .card {
+    background: #17181c;
+    border: 1px solid #24262c;
+    border-radius: 10px;
+    padding: 13px 12px 14px;
+  }
+  .card i { display: block; height: 8px; border-radius: 4px; background: #35383f; }
+  .card i + i { margin-top: 8px; width: 56%; height: 7px; background: #26282e; }
+  .card.live {
+    border-color: #4854c4;
+    background: #1a1d29;
+    box-shadow: 0 18px 32px -14px rgba(0,0,0,.9);
+    transform: rotate(-1.5deg);
+  }
+  .card.live i { background: #637aee; }
+  .card.live i + i { background: #414a7c; }
+  .card.dim { opacity: .55; }
+  .card.dimmer { opacity: .3; }
+</style>
+
+<div class="grid"></div>
+<div class="glow"></div>
+
+<div class="left">
+  <svg class="tile" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <g id="hat">
+        <path d="M18 63.5 L28 13.7 L8 2 L44 10.3 L58 55 Z"/>
+        <path d="M0.9 72.5 L7.5 65 L64 53 L71.8 57.4 L64 65.2 L10 76.7 Z"/>
+      </g>
+      <mask id="cut">
+        <rect x="-20" y="-20" width="168" height="168" fill="#fff"/>
+        <use href="#hat" fill="#000" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+      </mask>
+    </defs>
+    <g transform="translate(7.9 4.1) scale(0.959)">
+      <g mask="url(#cut)" fill="#637aee">
+        <path fill-rule="evenodd" d="M14 74 L30 70 L46 66 L58 70 L106 73 L116 79 L108 84 L100.5 92 L93 84 L85.5 92 L78 84 L70.5 92 L63 84 L55.5 92 L48 84 L30 88 L12 92 Z M33 76 L45 80 L33 84 Z"/>
+        <path d="M16 95 L30 98.8 L37.5 92.8 L45 102.9 L52.5 96.9 L60 106.9 L67.5 100.9 L75 110.9 L82.5 105 L90 115 L98 118 L90 123 L20 102 Z"/>
+      </g>
+      <use href="#hat" fill="#8ca5ff"/>
+    </g>
+  </svg>
+
+  <h1>Croc<br>the Job</h1>
+
+  <p class="tagline">Claude Code skills and a local board,<br>over <b>one JSON file</b> you own.</p>
+
+  <div class="steps">
+    <span>Scrape</span><span>·</span>
+    <span>Rank</span><span>·</span>
+    <span>Tailor</span><span>·</span>
+    <span>Track</span><span>·</span>
+    <span>Prep</span>
+  </div>
+</div>
+
+<div class="foot">Local-first, open source. Built with <b>Claude Code</b>.</div>
+
+<div class="app">
+  <div class="appbar">
+    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="name">data / jobs.json</span>
+  </div>
+  <div class="board">
+    <div class="col">
+      <div class="colhead">Ranked <em>12</em></div>
+      <div class="card"><i></i><i></i></div>
+      <div class="card"><i></i><i></i></div>
+      <div class="card dim"><i></i><i></i></div>
+      <div class="card dimmer"><i></i><i></i></div>
+    </div>
+    <div class="col">
+      <div class="colhead">Applied <em>7</em></div>
+      <div class="card live"><i></i><i></i></div>
+      <div class="card"><i></i><i></i></div>
+      <div class="card dim"><i></i><i></i></div>
+      <div class="card dimmer"><i></i><i></i></div>
+    </div>
+    <div class="col">
+      <div class="colhead">Screening <em>3</em></div>
+      <div class="card"><i></i><i></i></div>
+      <div class="card dim"><i></i><i></i></div>
+      <div class="card dimmer"><i></i><i></i></div>
+    </div>
+    <div class="col">
+      <div class="colhead">Offer <em>1</em></div>
+      <div class="card"><i></i><i></i></div>
+      <div class="card dimmer"><i></i><i></i></div>
+    </div>
+  </div>
+</div>

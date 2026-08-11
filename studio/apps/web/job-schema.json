@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Job",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "id": {
+      "type": "number",
+      "description": "Stable per-role number the dev-server assigns once and never reuses."
+    },
+    "title": {
+      "type": "string"
+    },
+    "company": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "first_seen": {
+      "type": "string"
+    },
+    "status_date": {
+      "type": "string",
+      "description": "The day `status` last changed."
+    },
+    "applied_date": {
+      "type": "string"
+    },
+    "screening_date": {
+      "type": "string"
+    },
+    "tech_interview_date": {
+      "type": "string"
+    },
+    "final_round_date": {
+      "type": "string"
+    },
+    "offer_date": {
+      "type": "string"
+    },
+    "rejected_date": {
+      "type": "string"
+    },
+    "duplicate_of": {
+      "type": ["string", "null"]
+    },
+    "outcome": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fit": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "ranked",
+        "applied",
+        "screening",
+        "tech_interview",
+        "final_round",
+        "offer",
+        "rejected",
+        "skipped",
+        "dismissed",
+        "expired"
+      ]
+    },
+    "portal": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "rank_score": {
+      "type": "number"
+    },
+    "rank_verdict": {
+      "type": "string"
+    },
+    "rank_date": {
+      "type": "string"
+    },
+    "rank_deadline": {
+      "type": "string"
+    },
+    "rank_location": {
+      "type": "string"
+    },
+    "excluded_reason": {
+      "type": "string",
+      "description": "Free text written by /scrape and /rank; rendered verbatim, never parsed."
+    },
+    "work_mode": {
+      "type": "string"
+    },
+    "salary": {
+      "type": "string"
+    },
+    "posted": {
+      "type": "string"
+    },
+    "rank_location_note": {
+      "type": "string"
+    },
+    "rank_dimensions": {
+      "type": "object",
+      "properties": {
+        "technical": { "type": "number" },
+        "experience": { "type": "number" },
+        "behavioral": { "type": "number" },
+        "career": { "type": "number" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["key"]
+}

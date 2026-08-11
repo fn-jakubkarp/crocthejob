@@ -1,0 +1,75 @@
+// Linter and formatter, replacing oxlint. `.jsonc`, not `.json`: Biome rejects
+// comments in `biome.json` by silently falling back to its defaults - the whole
+// file, `files.includes` included, is then ignored without a warning.
+{
+  // A child of the repo-root config, not a root itself - see ../../biome.jsonc.
+  // Without this, an editor rooted above this app rejects this file and lints
+  // everything on Biome's defaults instead.
+  "root": false,
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  // The app's own code only. Without this list a bare `biome check` walks the
+  // vendored skill scripts under `.agents/` and the built bundle in `dist/`.
+  "files": {
+    "includes": [
+      "src/**",
+      "server/**",
+      "vite.config.ts",
+      "components.json",
+      "package.json",
+      "tsconfig*.json",
+      "job-schema.json"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "tab",
+    "lineWidth": 80
+  },
+  "javascript": {
+    "formatter": { "quoteStyle": "double" }
+  },
+  "json": {
+    "formatter": { "indentStyle": "space", "indentWidth": 2 }
+  },
+  "css": {
+    // `@theme`, `@utility`, `@custom-variant` - index.css is Tailwind v4, and
+    // without this the file is 18 parse errors rather than one lintable stylesheet.
+    "parser": { "tailwindDirectives": true },
+    "formatter": { "indentStyle": "space", "indentWidth": 4 }
+  },
+  "linter": {
+    "enabled": true,
+    "domains": { "react": "recommended" },
+    "rules": {
+      "preset": "recommended",
+      // The two rules oxlint was configured for, kept at the same severities.
+      "correctness": {
+        "useHookAtTopLevel": "error"
+      },
+      "style": {
+        "useComponentExportOnlyModules": {
+          "level": "warn",
+          "options": { "allowConstantExport": true }
+        }
+      },
+      "a11y": {
+        // The board's wells take native HTML5 drag events on a plain div; there
+        // is no element with matching semantics, and keyboard users move cards
+        // through the card's own context menu instead.
+        "noStaticElementInteractions": "off"
+      }
+    }
+  },
+  "assist": {
+    "actions": { "source": { "organizeImports": "on" } }
+  },
+  "overrides": [
+    {
+      // Vendored shadcn output. Formatted with the rest, but not linted: the
+      // findings belong upstream, not in this repo's signal.
+      "includes": ["src/components/ui/**"],
+      "linter": { "enabled": false }
+    }
+  ]
+}

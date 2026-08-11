@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" color="#637aee" role="img" aria-labelledby="t d">
+  <title id="t">Croc the Job</title>
+  <desc id="d">Geometric alligator head with open jaws wearing a wizard hat</desc>
+  <defs>
+    <g id="hat">
+      <path d="M18 63.5 L28 13.7 L8 2 L44 10.3 L58 55 Z"/>
+      <path d="M0.9 72.5 L7.5 65 L64 53 L71.8 57.4 L64 65.2 L10 76.7 Z"/>
+    </g>
+    <mask id="cut">
+      <rect width="128" height="128" fill="#fff"/>
+      <use href="#hat" fill="#000" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+    </mask>
+  </defs>
+  <g fill="currentColor">
+    <g mask="url(#cut)">
+      <path fill-rule="evenodd" d="M14 74 L30 70 L46 66 L58 70 L106 73 L116 79 L108 84 L100.5 92 L93 84 L85.5 92 L78 84 L70.5 92 L63 84 L55.5 92 L48 84 L30 88 L12 92 Z M33 76 L45 80 L33 84 Z"/>
+      <path d="M16 95 L30 98.8 L37.5 92.8 L45 102.9 L52.5 96.9 L60 106.9 L67.5 100.9 L75 110.9 L82.5 105 L90 115 L98 118 L90 123 L20 102 Z"/>
+    </g>
+    <use href="#hat"/>
+  </g>
+</svg>
