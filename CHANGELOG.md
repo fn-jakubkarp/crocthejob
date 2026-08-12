@@ -48,6 +48,32 @@ All notable changes to this project are documented here. Format follows
   private.
 - `Escape` returns from a job page to the board.
 
+### Fixed
+
+- **A skill run denies by default for real.** `run-api.ts` passes
+  `--permission-mode dontAsk` rather than `manual`, which is an alias for `default` and
+  asks: under `-p` there was nobody to answer, so it denied by accident rather than by
+  rule. The endpoint also refuses a body that is not an object instead of throwing, looks
+  a command up by own key only, and never ends a response the stream already ended.
+- **`/rank #<id>` cannot overwrite an application.** Scoring an entry at `applied`,
+  `screening`, `tech_interview`, `final_round`, `offer` or `rejected` writes the `rank_*`
+  fields and leaves the status where it is.
+- **`/outcome` knows `final_round`**, and stamps the stage's own date field
+  (`screening_date` through `rejected_date`) beside `status_date`, off the date it
+  collected rather than off today.
+- **The application folder is derived safely.** Company and role are read off an
+  untrusted posting, so each is reduced to `a-z0-9_` and the result has to sit directly
+  under `documents/applications/`. An imported entry carrying anything else has the field
+  dropped.
+- **The dated log reads dates that exist.** `2026-02-30` stays prose instead of being
+  read back as March 2, and editing the standing note now leaves every dated line byte
+  for byte where it was instead of lifting the prose above the log.
+- **Job page details.** The spinner marks the command that is running rather than every
+  button the run disabled; the document reader clears the last file before loading the
+  next and renders prose only on a successful read; the calendar refuses a stored value
+  that is not a date; the transcript announces its new lines; copying reports failure
+  where the Clipboard API is absent; a refused run no longer reloads the board.
+
 ### Removed
 
 - **Chat page.** A chat pane detached from any entry answered questions about nothing in
