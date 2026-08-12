@@ -8,7 +8,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { shortDate } from "@/lib/jobs";
+import { isoDate, shortDate } from "@/lib/jobs";
 import { cn } from "@/lib/utils";
 
 /**
@@ -204,7 +204,10 @@ export function EditableDate({
 	hue?: boolean;
 }) {
 	const [open, setOpen] = useState(false);
-	const selected = value ? parseISO(value) : undefined;
+	// Checked before it is parsed: a stray string in the file otherwise reaches the
+	// calendar as an Invalid Date, which is a blank month with no way back.
+	const stored = isoDate(value);
+	const selected = stored ? parseISO(stored) : undefined;
 	const field = look === "field";
 
 	return (

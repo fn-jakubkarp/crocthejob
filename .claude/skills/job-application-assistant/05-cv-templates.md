@@ -15,7 +15,7 @@ The application folder is the unit of work. It holds the posting, the tailored C
 interview prep for that one application. Lowercase, underscores for spaces, one convention
 across `/apply`, `/outcome`, `/interview` and the board.
 
-```
+```text
 documents/applications/acme_qa_engineer/
     job_posting.md
     cv_submitted.md          <- name it cv_submitted.md once actually sent

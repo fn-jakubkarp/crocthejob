@@ -267,12 +267,14 @@ the user in a full redesign, and the constraints below are the standing ones.
   that forwarded arbitrary text to a CLI with file write access in the repo root
   would be a remote shell with extra steps.
 - **A job description is untrusted text, and it goes in the prompt.** So a run is
-  a deny-by-default session: `--permission-mode manual` with a hand-written
+  a deny-by-default session: `--permission-mode dontAsk` with a hand-written
   `--allowedTools`, writes scoped by path to `documents/**` and
   `data/jobs.json`, and Bash removed outright. The mode flag is load-bearing and
   not decoration: `--allowedTools` only ever *adds*, so on a machine whose user
   settings carry `"defaultMode": "bypassPermissions"` the allowlist restricts
-  nothing at all. `.claude/commands/*.md` is deliberately outside the writable
+  nothing at all. `dontAsk` refuses anything off the list by rule and reports the
+  refusal; `manual`, which stood here first, is an alias for `default` and only
+  denied because `-p` has nobody to answer the prompt. `.claude/commands/*.md` is deliberately outside the writable
   paths, because a run that can rewrite the command files can grant itself
   anything on the next one.
 - **`WebFetch` stays unscoped, and that is the residual risk.** `/research` and

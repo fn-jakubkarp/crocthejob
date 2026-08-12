@@ -9,6 +9,7 @@ import {
 	columnOf,
 	daysBetween,
 	daysElapsed,
+	isoDate,
 	type Job,
 	outcomeTags,
 	processAge,
@@ -57,12 +58,6 @@ import { cn } from "@/lib/utils";
  * A stage still ahead of today is a booking, not a wait, and reads `in 1d`. The rail
  * reads dates; the log beside it is where one gets corrected.
  */
-
-const ISO = /^\d{4}-\d{2}-\d{2}$/;
-
-/** A stored value only if it is a date. The file is hand-edited; a stray string is not. */
-const iso = (value: unknown): string | undefined =>
-	typeof value === "string" && ISO.test(value) ? value : undefined;
 
 /** The chevron, drawn twice: the outer element is the hairline, the inner the fill. */
 const SHAPE = (first: boolean, last: boolean) =>
@@ -293,7 +288,7 @@ export function StageRail({
 	/**
 	 * How long this has been in play at all, which is the first thing the page is
 	 * opened for. Off the earliest date the entry carries rather than `applied_date`:
-	 * 51 of 392 entries have one, and an application logged without a date read as
+	 * most entries do not have one, and an application logged without a date read as
 	 * having taken no time.
 	 */
 	const start = processSince(job);
@@ -303,7 +298,7 @@ export function StageRail({
 	 * total" on a process that took thirty.
 	 */
 	const ended = closed
-		? (iso(job.rejected_date) ?? iso(job.status_date) ?? undefined)
+		? (isoDate(job.rejected_date) ?? isoDate(job.status_date) ?? undefined)
 		: undefined;
 	const running = start
 		? closed
@@ -426,6 +421,7 @@ export function StageRail({
 	 * look for anyway.
 	 */
 	const track = useRef<HTMLDivElement>(null);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: the stage is the signal
 	useEffect(() => {
 		const scroller = track.current;
 		if (!scroller) return;
@@ -469,7 +465,9 @@ export function StageRail({
 			block: "nearest",
 		});
 		return done;
-	}, []);
+		// The stage the entry is at is what `aria-current` is on, so moving it is what
+		// makes this worth running again.
+	}, [current]);
 
 	return (
 		<section aria-label="Stage" className="flex flex-col gap-2">

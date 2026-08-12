@@ -135,7 +135,7 @@ A record of past job applications. Each subfolder is one application.
 
 You can maintain these folders by hand, or let the **`/outcome`** command do it: it records progress updates and final results conversationally, archives the submitted drafts and the posting text, keeps `outcome.md` in the format below, and updates the entry in `data/jobs.json` in the same step.
 
-**Subfolder naming:** `<company>_<role>` — lowercase, underscores for spaces.
+**Subfolder naming:** `<company>_<role>` — lowercase, underscores for spaces. Both parts are read off a posting, so each is reduced to `a-z0-9_` first: a slash, a `..` or a control character in a company name is dropped rather than carried into a path, and the folder always sits directly under `applications/`.
 
 Examples:
 ```

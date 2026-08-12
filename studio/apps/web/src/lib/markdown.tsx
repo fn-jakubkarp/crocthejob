@@ -15,14 +15,20 @@ export const DOC_COMPONENTS: Components = {
 			<table {...props}>{children}</table>
 		</div>
 	),
-	a: ({ children, href, ...props }) => (
-		<a
-			href={href}
-			target={href?.startsWith("http") ? "_blank" : undefined}
-			rel={href?.startsWith("http") ? "noreferrer" : undefined}
-			{...props}
-		>
-			{children}
-		</a>
-	),
+	a: ({ children, href, ...props }) => {
+		// Protocol-relative too: `//host/path` leaves the app exactly as `https://` does,
+		// and the `rel` is the same security property `externalLink` carries, spelled
+		// the same way.
+		const away = /^(https?:)?\/\//i.test(href ?? "");
+		return (
+			<a
+				href={href}
+				target={away ? "_blank" : undefined}
+				rel={away ? "noreferrer noopener" : undefined}
+				{...props}
+			>
+				{children}
+			</a>
+		);
+	},
 };

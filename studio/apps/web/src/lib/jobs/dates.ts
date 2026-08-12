@@ -20,6 +20,14 @@ export function shortDate(iso: string): string {
 const ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /**
+ * A stored value only if it is an ISO date. `data/jobs.json` is hand-edited and written
+ * by four skills, so a stray string reaches every reading that takes a date; the ones
+ * that hand it to a date library are where it becomes an Invalid Date on screen.
+ */
+export const isoDate = (value: unknown): string | undefined =>
+	typeof value === "string" && ISO.test(value) ? value : undefined;
+
+/**
  * ISO date as a UTC day number, or null. From the parts, not `new Date(iso)`: west
  * of UTC that reads yesterday's deadline as today's.
  */

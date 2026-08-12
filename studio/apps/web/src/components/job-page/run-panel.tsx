@@ -78,7 +78,13 @@ export function RunPanel({ run }: { run: Run }) {
 				</div>
 			</div>
 
-			<div className="max-h-[26rem] space-y-2 overflow-y-auto">
+			{/* Announced as it arrives: the transcript is the only sign a run is doing
+			    anything, and a reader who cannot see it appended would be told nothing
+			    between starting the run and its last line. */}
+			<div
+				aria-live="polite"
+				className="max-h-[26rem] space-y-2 overflow-y-auto"
+			>
 				{run.lines.length === 0 && (
 					<p className="text-muted-foreground text-meta">Starting.</p>
 				)}

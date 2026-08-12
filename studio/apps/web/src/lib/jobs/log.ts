@@ -61,6 +61,9 @@ const SHORT = [
 const ENTRY =
 	/^(\s*(?:[-*+]\s*)?)(\d{4}-\d{2}-\d{2}|\d{1,2}\s+[A-Za-z]{3,9}\.?(?:\s+\d{4})?)\s*:[ \t]*(.*)$/;
 
+/** February at its longest: the year is usually not written down to check it against. */
+const LENGTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
 const DAY = 86_400_000;
 
 /** Written by hand, or written as ISO. A new entry matches whichever is already there. */
@@ -86,7 +89,12 @@ export type ParsedLog = {
 
 function utcDay(iso: string): number | null {
 	const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-	return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : null;
+	if (!m) return null;
+	const time = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+	// Round-tripped, the way `readChanges` does it: `Date.UTC` rolls 2026-02-30 forward
+	// into March rather than refusing it, and a log line silently dated two days off the
+	// day somebody typed is worse than one that stays prose.
+	return new Date(time).toISOString().slice(0, 10) === iso ? time : null;
 }
 
 const startOfToday = (now: Date) =>
@@ -119,7 +127,7 @@ function readDate(text: string): Written | null {
 	if (!parts) return null;
 	const month = MONTHS.indexOf(parts[2].slice(0, 3).toLowerCase());
 	const day = Number(parts[1]);
-	if (month === -1 || day < 1 || day > 31) return null;
+	if (month === -1 || day < 1 || day > LENGTH[month]) return null;
 	return { day, month, year: parts[3] ? Number(parts[3]) : null };
 }
 
@@ -241,6 +249,36 @@ export function dropEntry(notes: string, line: number): string {
 	if (line < 0 || line >= lines.length) return notes;
 	lines.splice(line, 1);
 	return lines.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
+/**
+ * The note with its prose rewritten, and every dated line left byte for byte where it
+ * was.
+ *
+ * `parseLog` hands the prose back as one block, joined out of whatever sat between the
+ * entries, so writing it back has to land in those same lines rather than stacking it
+ * on top of the log: a note whose recruiter line sits under two dated entries keeps it
+ * there. Prose that has grown past the lines it came from goes on the end, which is
+ * where a line typed into this note goes anyway.
+ */
+export function rewriteProse(
+	notes: string | undefined,
+	entries: LogEntry[],
+	text: string,
+): string {
+	const lines = (notes ?? "").split("\n");
+	const dated = new Set(entries.map((entry) => entry.line));
+	// Cleared, not blanked: an empty prose leaves the log and nothing else, rather than
+	// the run of empty lines the old prose used to occupy.
+	const next = text ? text.split("\n") : [];
+	const out: string[] = [];
+	let taken = 0;
+	lines.forEach((line, i) => {
+		if (dated.has(i)) out.push(line);
+		else if (taken < next.length) out.push(next[taken++]);
+	});
+	out.push(...next.slice(taken));
+	return out.join("\n");
 }
 
 /**

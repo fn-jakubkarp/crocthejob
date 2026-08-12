@@ -85,7 +85,8 @@
     },
     "application_dir": {
       "type": "string",
-      "description": "Repo-relative path to this entry's application folder, no trailing slash. Written by /apply, /outcome and /research, never by the board."
+      "pattern": "^documents/applications/[a-z0-9_]+$",
+      "description": "Repo-relative path to this entry's application folder, no trailing slash: `documents/applications/<company>_<role>`, lowercase and underscores. Written by /apply, /outcome and /research, never by the board. An import that carries anything else has the field dropped."
     },
     "notes": {
       "type": "string"

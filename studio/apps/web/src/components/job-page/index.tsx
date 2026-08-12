@@ -77,6 +77,9 @@ export function JobPage({
 	const [reading, setReading] = useState<Reading | null>(null);
 	const { setup } = useSetup();
 	const stage = stageOf(job);
+	// Held as a const so the narrowing survives into the callbacks below: an entry
+	// without an id is one nothing can be run against.
+	const id = job.id;
 	/**
 	 * Every control that writes this entry stands down while a skill is writing it, in one
 	 * native attribute rather than a `busy` prop threaded through six components. The
@@ -192,13 +195,14 @@ export function JobPage({
 							</Button>
 						)}
 
-						{setup.ai && job.id !== undefined && (
+						{setup.ai && id !== undefined && (
 							<Actions
 								job={job}
 								busy={busy}
+								running={run.jobId === id ? run.command : null}
 								onRun={(command: CommandId) =>
 									run.start(
-										job.id as number,
+										id,
 										command,
 										command === "interview" ? stage : undefined,
 									)

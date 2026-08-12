@@ -1,5 +1,4 @@
 import { memo, useCallback, useState } from "react";
-import { toast } from "sonner";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { DismissDialog } from "@/components/dismiss-dialog";
 import { CardFace } from "@/components/job-card/card-face";
@@ -12,6 +11,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { copyText } from "@/lib/copy";
 import { beginDrag, dragGhost, endDrag } from "@/lib/drag-state";
 import {
 	DRAG_TYPE,
@@ -147,18 +147,6 @@ export const JobCard = memo(function JobCard({
 		},
 		[job.key, onSelect],
 	);
-
-	// `navigator.clipboard` is absent on non-secure origins, and this runs on plain
-	// http://localhost - hence the toast on rejection.
-	const copyText = useCallback((text: string, what: string) => {
-		navigator.clipboard.writeText(text).then(
-			() => toast.success(`${what} copied`),
-			(e: unknown) =>
-				toast.error(`Could not copy the ${what.toLowerCase()}`, {
-					description: e instanceof Error ? e.message : String(e),
-				}),
-		);
-	}, []);
 
 	const onDragStart = useCallback(
 		(e: React.DragEvent<HTMLElement>) => {

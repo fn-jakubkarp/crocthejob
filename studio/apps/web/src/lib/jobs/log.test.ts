@@ -5,6 +5,7 @@ import {
 	parseLog,
 	redateEntry,
 	rewriteEntry,
+	rewriteProse,
 } from "./log";
 
 /**
@@ -109,5 +110,46 @@ test("an appended entry matches the note's own style", () => {
 test("a dropped entry takes its line with it", () => {
 	expect(dropEntry("3 Jul: Screening\n8 Jul: Feedback", 0)).toBe(
 		"8 Jul: Feedback",
+	);
+});
+
+test("a day that month never had stays prose", () => {
+	const log = parseLog(
+		"2026-02-30: Screening\n30 Feb: Screening\n31 Apr: Call\n3 Jul: Screening",
+		{ since: "2026-07-01", now },
+	);
+	expect(log.entries.map((e) => e.date)).toEqual(["2026-07-03"]);
+	expect(log.prose).toBe(
+		"2026-02-30: Screening\n30 Feb: Screening\n31 Apr: Call",
+	);
+});
+
+test("rewriting the prose leaves the dated lines where they were", () => {
+	const notes = [
+		"Recruiter: Amelia",
+		"3 Jul: Screening",
+		"Rate: 14-16k",
+		"8 Jul: Tech invite",
+	].join("\n");
+	const log = parseLog(notes, { since: "2026-07-01", now });
+	expect(log.prose).toBe("Recruiter: Amelia\nRate: 14-16k");
+
+	expect(
+		rewriteProse(
+			notes,
+			log.entries,
+			"Recruiter: Amelia Zawadzka\nRate: 15-17k",
+		),
+	).toBe(
+		"Recruiter: Amelia Zawadzka\n3 Jul: Screening\nRate: 15-17k\n8 Jul: Tech invite",
+	);
+	// Grown past the lines it came from, the rest lands at the end rather than pushing
+	// a dated line down.
+	expect(rewriteProse(notes, log.entries, "A\nB\nC")).toBe(
+		"A\n3 Jul: Screening\nB\n8 Jul: Tech invite\nC",
+	);
+	// Cleared, the log is all that is left.
+	expect(rewriteProse(notes, log.entries, "")).toBe(
+		"3 Jul: Screening\n8 Jul: Tech invite",
 	);
 });

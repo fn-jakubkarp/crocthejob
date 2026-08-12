@@ -16,12 +16,15 @@ const ROOT = path.resolve(import.meta.dirname, "../../../..");
  * of these commands puts it in the prompt. So the run is a deny-by-default session with
  * this list opened by hand:
  *
- *  - **`--permission-mode manual` is load-bearing.** `--allowedTools` only ever *adds*;
+ *  - **`--permission-mode dontAsk` is load-bearing.** `--allowedTools` only ever *adds*;
  *    it cannot take anything away. A machine whose user settings carry
  *    `"defaultMode": "bypassPermissions"` runs every tool unrestricted no matter what is
  *    listed here, and that is the common case for anyone who has turned prompt fatigue
- *    off. The explicit mode is what overrides the setting; verified against
- *    `claude` 2.1.228.
+ *    off. The explicit mode is what overrides the setting. `dontAsk` is the mode that
+ *    refuses anything outside the list by rule, and the refusals come back on the result
+ *    line, which is what the panel prints as "Tool blocked". `manual` stood here first
+ *    and is an alias for `default`, which *asks*: under `-p` there is nobody to answer,
+ *    so it denied by accident rather than by rule. Verified against `claude` 2.1.229.
  *  - **Writes are scoped by path.** Not `acceptEdits`, which blanket-accepts every edit
  *    anywhere under the root. The two paths below are the ones the skills legitimately
  *    write; `.claude/commands/*.md` deliberately is not, since a run that can rewrite
@@ -86,28 +89,42 @@ const COMMANDS: Record<
  */
 let running: ChildProcess | null = null;
 
-/** The prompt a request asks for, or the reason it is being refused. */
-function promptFor(body: Record<string, unknown>): string | { error: string } {
+/**
+ * The prompt a request asks for, or the reason it is being refused. A body that is not
+ * an object at all is one of the refusals: `JSON.parse` will hand back `null`, a number
+ * or an array as happily as a record, and reading a field off the first of those throws
+ * out of the middleware rather than answering 400.
+ */
+function promptFor(body: unknown): string | { error: string } {
+	if (!body || typeof body !== "object" || Array.isArray(body))
+		return { error: "expected a JSON object" };
+	const fields = body as Record<string, unknown>;
+
 	// A reply carries on an interrupted run, and that text really is whatever the person
 	// typed. It rides the same tool restrictions and the same working directory as the
 	// command that opened the session, so it grants nothing the first turn did not.
-	if (typeof body.reply === "string") {
-		const reply = body.reply.trim();
+	if (typeof fields.reply === "string") {
+		const reply = fields.reply.trim();
 		if (!reply) return { error: "reply is empty" };
-		if (typeof body.sessionId !== "string")
+		if (typeof fields.sessionId !== "string")
 			return { error: "a reply needs the session it answers" };
 		return reply;
 	}
 
-	const command = COMMANDS[String(body.command)];
-	if (!command) return { error: `unknown command: ${String(body.command)}` };
+	const name = String(fields.command);
+	// `hasOwn`, not a bare lookup: `{"command": "constructor"}` otherwise finds
+	// `Object.prototype`'s, passes the truthiness check, and crashes on a `prompt`
+	// that was never there.
+	if (!Object.hasOwn(COMMANDS, name))
+		return { error: `unknown command: ${name}` };
+	const command = COMMANDS[name];
 
-	const id = body.id;
+	const id = fields.id;
 	if (typeof id !== "number" || !Number.isInteger(id) || id < 1)
 		return { error: "`id` must be the entry's integer id" };
 
-	const stage = typeof body.stage === "string" ? body.stage : undefined;
-	if (body.command === "interview" && (!stage || !STAGES.has(stage)))
+	const stage = typeof fields.stage === "string" ? fields.stage : undefined;
+	if (name === "interview" && (!stage || !STAGES.has(stage)))
 		return { error: `\`stage\` must be one of ${[...STAGES].join(", ")}` };
 
 	return command.prompt(id, stage);
@@ -136,9 +153,9 @@ export function runApi(): Plugin {
 					return;
 				}
 
-				let body: Record<string, unknown>;
+				let body: unknown;
 				try {
-					body = (await readBody(req)) as Record<string, unknown>;
+					body = await readBody(req);
 				} catch (err) {
 					json(res, 400, { error: String(err) });
 					return;
@@ -149,6 +166,9 @@ export function runApi(): Plugin {
 					json(res, 400, prompt);
 					return;
 				}
+				// A prompt came back, so the body was an object: `promptFor` refuses
+				// everything else before it reads a field.
+				const fields = body as Record<string, unknown>;
 
 				if (running) {
 					json(res, 409, { error: "a run is already going" });
@@ -162,7 +182,7 @@ export function runApi(): Plugin {
 					"stream-json",
 					"--verbose",
 					"--permission-mode",
-					"manual",
+					"dontAsk",
 					"--allowedTools",
 					...ALLOWED_TOOLS,
 					"--disallowedTools",
@@ -172,8 +192,8 @@ export function runApi(): Plugin {
 					"--max-budget-usd",
 					"5",
 				];
-				if (typeof body.sessionId === "string")
-					args.push("--resume", body.sessionId);
+				if (typeof fields.sessionId === "string")
+					args.push("--resume", fields.sessionId);
 
 				const child = spawn("claude", args, {
 					cwd: ROOT,
@@ -192,7 +212,13 @@ export function runApi(): Plugin {
 				});
 				child.on("error", (err) => {
 					logger.error(`[run] spawn failed: ${err.message}`);
-					res.end(`${JSON.stringify({ type: "error", error: err.message })}\n`);
+					// `pipe` ends the response when stdout does, and a kill on a closed tab
+					// can raise this after that: ending twice makes the response emit an
+					// error nobody is listening for.
+					if (!res.writableEnded)
+						res.end(
+							`${JSON.stringify({ type: "error", error: err.message })}\n`,
+						);
 				});
 				const release = () => {
 					if (running === child) running = null;

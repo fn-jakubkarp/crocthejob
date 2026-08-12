@@ -1,5 +1,4 @@
 import { Copy } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -8,6 +7,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { copyText } from "@/lib/copy";
 // `?raw`, not a parsed import: what this panel is for is showing the file as it is
 // written, and re-serialising it through `JSON.stringify` would drop the key order the
 // file reads in and reformat every nested block.
@@ -56,12 +56,7 @@ export function SchemaDialog({
 					<Button
 						variant="outline"
 						size="sm"
-						onClick={() => {
-							void navigator.clipboard
-								.writeText(schema)
-								.then(() => toast.success("Schema copied"))
-								.catch(() => toast.error("Clipboard refused"));
-						}}
+						onClick={() => copyText(schema, "Schema")}
 					>
 						<Copy className="size-3.5" />
 						Copy

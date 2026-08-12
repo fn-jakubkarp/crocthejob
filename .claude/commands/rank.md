@@ -89,6 +89,7 @@ Sort by overall score (descending), urgency as tiebreaker.
 Update `data/jobs.json` in place - these fields are additive to the scraper's schema:
 
 - Ranked jobs: set `"status": "ranked"` and add `"rank_score": <overall>`, `"rank_verdict": "<band>"`, `"rank_date": "YYYY-MM-DD"`
+- **A score never overwrites an application or a closed entry.** An entry at `applied`, `screening`, `tech_interview`, `final_round`, `offer` or `rejected` keeps the status it has: the `rank_*` fields are written, the status line is not. This only comes up through `#<id>`, which skips Step 1's exclusions, and it is the one exclusion the direct form still has to honour - `ranked` over `screening` throws away the record of an application in flight to store a triage score. Say so in the output: "scored, status left at screening".
 - `"rank_location": "<the agent's `location` string>"` - the place, verbatim from the posting. Never `PASS`/`FLAG`/`FAIL`; entries ranked before this change still carry those and the board translates them, but do not write a new one.
 - `"rank_location_note": "<the agent's `location_note`>"` whenever there was one. Omit the key otherwise.
 - **Do not re-rank already-ranked entries just to backfill the location.** Their `rank_location` stays as it is until `--all` or a fresh `/rank` reaches them on its own; a re-read of 113 postings to replace one word is not worth the tokens.
@@ -96,7 +97,7 @@ Update `data/jobs.json` in place - these fields are additive to the scraper's sc
 - **Never write, renumber or drop `next_id` (file root), or an entry's `id`, `status_date`, `applied_date`, `duplicate_of` or `outcome`.** Those six are the kanban board's; `id` in particular is the stable number the user names a posting by, so a rewrite that reassigns it breaks every reference. See the table in `.claude/skills/job-scraper/SKILL.md` Step 4.
 - **`ghosted` and `withdrawn` are not statuses any more.** An application that ended is `status: "rejected"` with the reason in `outcome`. Do not write the old values, and treat a `rejected` entry as closed whatever its tags say.
 
-Never move an entry into an application stage (`applied`, `screening`, `tech_interview`, `offer`, `rejected`) - those record applications, and `/rank` never applies. Re-running `/rank` is idempotent: already-`ranked` jobs are skipped unless `--all` re-scores them.
+Never move an entry into an application stage (`applied`, `screening`, `tech_interview`, `final_round`, `offer`, `rejected`), and never move one out of it either - those record applications, and `/rank` never applies. Re-running `/rank` is idempotent: already-`ranked` jobs are skipped unless `--all` re-scores them.
 
 ---
 

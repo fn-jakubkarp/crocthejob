@@ -147,7 +147,7 @@ Open Claude Code **inside the repo** and run the skills. The loop is: profile on
 bun run dev        # http://localhost:5173
 ```
 
-Drag a card and the entry's `status` is rewritten in `data/jobs.json`. Notes typed on a card save to the same entry. Five sections: the board, stats, a history timeline, a markdown docs reader, and a chat pane that talks to the same Claude Code install your terminal does.
+Drag a card and the entry's `status` is rewritten in `data/jobs.json`. Notes typed on a card save to the same entry. Five sections: the board, stats, a history timeline, a markdown docs reader, and a page per posting whose run panel drives the same Claude Code install your terminal does.
 
 > [!WARNING]
 > It runs under `bun run dev` only. The write path is a Vite dev-server plugin, so `bun run build` produces a bundle that loads nothing and saves nothing. This is a local tool, not a deployment.
@@ -190,7 +190,7 @@ crocthejob/
 ├── .agents/skills/                # portal search CLIs (Bun, one SKILL.md each)
 ├── documents/                     # your CV, LinkedIn, references, applications + templates/
 ├── studio/                        # the web app and the code it shares
-│   ├── apps/web/                  # board, stats, history, docs, chat (Vite + React)
+│   ├── apps/web/                  # board, stats, history, docs, job page (Vite + React)
 │   ├── packages/jobs-data/        # the schema, and the only code that opens jobs.json
 │   └── brand/                     # the marks
 ├── tools/                         # lint_skills.py, security_guards.py, verify_pdf.py

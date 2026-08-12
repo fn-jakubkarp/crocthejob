@@ -22,11 +22,14 @@ import { cn } from "@/lib/utils";
 export function Actions({
 	job,
 	busy,
+	running,
 	onRun,
 }: {
 	job: Job;
 	/** A run is going, anywhere. One at a time, matching the server's lock. */
 	busy: boolean;
+	/** The one command actually running against this entry, if it is this entry's. */
+	running?: CommandId | null;
 	onRun: (command: CommandId, stage?: string) => void;
 }) {
 	const offered = commandsFor(job);
@@ -55,7 +58,10 @@ export function Actions({
 								blocked && "opacity-45",
 							)}
 						>
-							{busy ? (
+							{/* The spinner marks the command that is running, not every button
+							    the run happens to have disabled: five of them turning at once
+							    said five things were going. */}
+							{running === key ? (
 								<Loader2 className="size-3.5 shrink-0 animate-spin" />
 							) : (
 								<Play className="size-3.5 shrink-0" />

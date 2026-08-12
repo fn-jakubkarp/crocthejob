@@ -2,7 +2,6 @@ import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -11,6 +10,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { copyText } from "@/lib/copy";
 import { DOC_COMPONENTS } from "@/lib/markdown";
 
 /**
@@ -47,6 +47,9 @@ export function DocModal({
 		if (!path) return;
 		let live = true;
 		setState("loading");
+		// The last document goes with the state that described it. Held, it is what the
+		// Copy button copies while the next one is still on the wire.
+		setText("");
 		fetch(`/api/files?path=${encodeURIComponent(path)}`)
 			.then((res) => res.json())
 			.then((body: { text?: string; error?: string }) => {
@@ -74,6 +77,7 @@ export function DocModal({
 	// The opening heading is the document's name, and the header above already says it.
 	const prose = body.replace(/^\s*#\s+.+\n+/, "");
 	const loading = state === "loading";
+	const ready = state === "ready";
 
 	return (
 		<Dialog
@@ -96,12 +100,7 @@ export function DocModal({
 								variant="ghost"
 								size="icon-sm"
 								aria-label="Copy markdown"
-								onClick={() => {
-									void navigator.clipboard
-										.writeText(body)
-										.then(() => toast.success("Markdown copied"))
-										.catch(() => toast.error("Clipboard refused"));
-								}}
+								onClick={() => copyText(body, "Markdown")}
 							>
 								<Copy />
 							</Button>
@@ -133,7 +132,9 @@ export function DocModal({
 						</div>
 					)}
 
-					{!loading && (
+					{/* Only what was read: on a failed read the box above is the whole
+					    answer, and prose under it would be the document before this one. */}
+					{ready && (
 						<div className="doc">
 							<ReactMarkdown
 								remarkPlugins={[remarkGfm]}

@@ -15,7 +15,7 @@ All notable changes to this project are documented here. Format follows
 - **Skill runs from the board.** `/rank`, `/research`, `/apply`, `/interview` and
   follow-up can be started on an entry from the job page, with the run's output streamed
   back into the panel. `server/run-api.ts` spawns `claude` at the repo root under
-  `--permission-mode manual` with an explicit allowlist, writes scoped to
+  `--permission-mode dontAsk` with an explicit allowlist, writes scoped to
   `documents/` and `data/jobs.json`, and Bash denied outright, because a job description
   is untrusted text that lands in every one of those prompts.
 - **`/research`.** Standalone company research on one tracked posting, writing the

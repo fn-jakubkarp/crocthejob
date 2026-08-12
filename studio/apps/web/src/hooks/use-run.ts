@@ -96,6 +96,10 @@ export function useRun(onFinished: () => void): Run {
 			setActivity("thinking");
 			const controller = new AbortController();
 			abort.current = controller;
+			// Only a run that actually started can have written anything. A 400 or the
+			// 409 for a run already going is a refusal, and reloading the board on one
+			// is a read of a file nothing touched.
+			let ran = false;
 
 			try {
 				const res = await fetch("/api/run", {
@@ -113,6 +117,7 @@ export function useRun(onFinished: () => void): Run {
 					return;
 				}
 
+				ran = true;
 				const reader = res.body
 					.pipeThrough(new TextDecoderStream())
 					.getReader();
@@ -175,7 +180,7 @@ export function useRun(onFinished: () => void): Run {
 				setActivity(null);
 				// A skill's whole job is writing to data/jobs.json, and the board is
 				// holding a copy taken before it ran.
-				onFinished();
+				if (ran) onFinished();
 			}
 		},
 		[push, onFinished],

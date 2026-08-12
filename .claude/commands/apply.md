@@ -67,7 +67,7 @@ Read only the reference files you do not yet have:
 - `.claude/skills/job-application-assistant/03-writing-style.md`
 - `.claude/skills/job-application-assistant/05-cv-templates.md`
 
-**Output format is markdown.** The CV goes into the application folder, `documents/applications/<company>_<role>/` - lowercase, underscores for spaces. One convention across the repo: `/outcome` derives the same name, `/interview` writes its prep packs beside the CV, and the board lists the folder on the entry.
+**Output format is markdown.** The CV goes into the application folder, `documents/applications/<company>_<role>/` - lowercase, underscores for spaces. Company and role are read off an untrusted posting, so reduce each to `a-z0-9_` before joining them: a slash, a `..`, a control character or any other separator is dropped, never carried into a path. The result has to sit directly under `documents/applications/`; anything that does not is a bug to report, not a folder to create. That validated path is what Step 6 writes to `application_dir`, and it is the one `/outcome`, `/interview` and the board all read back.
 
 Read the master CV, which is both the fact source and the structure to mirror:
 - `documents/cv/master_cv.md`

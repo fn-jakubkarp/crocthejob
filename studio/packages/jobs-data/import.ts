@@ -13,6 +13,16 @@ import { slug } from "./values.ts";
 /** Keys that would reach `Object.prototype` if assigned onto `seen`. */
 const BLOCKED = ["__proto__", "constructor", "prototype"];
 
+/**
+ * The application folder, as `/apply` derives it: `documents/applications/<company>_<role>`,
+ * lowercase and underscores, no trailing slash.
+ *
+ * Checked on the way in because the field is a path four skills write into and an
+ * import is somebody else's file. A `../..` or an absolute path carried through here
+ * would be a folder name walking out of the tree on the next run.
+ */
+const APPLICATION_DIR = /^documents\/applications\/[a-z0-9_]+$/;
+
 const isEntry = (value: unknown): value is JobEntry =>
 	!!value && typeof value === "object" && !Array.isArray(value);
 
@@ -82,6 +92,12 @@ export function mergeImport(
 
 		const { id, ...rest } = entry;
 		for (const blocked of BLOCKED) delete rest[blocked];
+		if (
+			typeof rest.application_dir === "string" &&
+			!APPLICATION_DIR.test(rest.application_dir)
+		) {
+			delete rest.application_dir;
+		}
 		// A status this build does not know would land the card in no column at all, so
 		// it comes in as new rather than as nothing.
 		const status =

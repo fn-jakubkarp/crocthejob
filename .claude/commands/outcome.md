@@ -28,9 +28,9 @@ Follow these steps **in order**.
 
 ## Step 1: Load State and Identify the Application
 
-1. Read `data/jobs.json`. Applications are the entries whose `status` is `applied`, `screening`, `tech_interview`, `offer` or `rejected`.
+1. Read `data/jobs.json`. Applications are the entries whose `status` is `applied`, `screening`, `tech_interview`, `final_round`, `offer` or `rejected`.
 2. **With `#<id>`:** take the entry whose `id` is that integer, no matching needed. **With a name argument:** match entries case-insensitively on `company` (and `title`, if given). One match → proceed. Several → list them and ask. None → the application was made outside the workflow; collect company, role, date applied, channel, and posting URL from the user and add an entry keyed `manual:<company-slug>:<role-slug>` with `portal: "manual (user)"`, the same shape the board's **Add posting** dialog writes.
-3. **Without an argument:** list all entries whose status is open (`applied`, `screening`, `tech_interview`, `offer` - not `rejected`) as a numbered table (company, role, date applied, current status, days quiet, follow-ups sent) and ask which to update. The two derived columns come straight from existing data: **days quiet** counts from the entry's `applied_date`, `status_date` or the latest dated entry in `notes`, whichever is more recent; **follow-ups sent** counts the `followed up YYYY-MM-DD` markers in `notes`. If any open entry is 10+ days quiet with fewer than two follow-ups sent, add one line under the table: "Some of these have gone quiet - want a follow-up draft? (Step 2b)". If every entry is resolved, say so and stop.
+3. **Without an argument:** list all entries whose status is open (`applied`, `screening`, `tech_interview`, `final_round`, `offer` - not `rejected`) as a numbered table (company, role, date applied, current status, days quiet, follow-ups sent) and ask which to update. The two derived columns come straight from existing data: **days quiet** counts from the entry's `applied_date`, `status_date` or the latest dated entry in `notes`, whichever is more recent; **follow-ups sent** counts the `followed up YYYY-MM-DD` markers in `notes`. If any open entry is 10+ days quiet with fewer than two follow-ups sent, add one line under the table: "Some of these have gone quiet - want a follow-up draft? (Step 2b)". If every entry is resolved, say so and stop.
 4. Derive the archive folder name: `documents/applications/<company>_<role>/` - lowercase, underscores for spaces (the convention documented in `documents/README.md`). Check whether the folder and an `outcome.md` already exist - if so, you are updating, not creating.
 
 ---
@@ -119,7 +119,9 @@ Update rules: tick stage checkboxes as they are reached (add the date in parenth
 
 ## Step 4: Update the Entry
 
-Set the matched entry's `status` (`applied` → `screening` → `tech_interview` → `offer` → `rejected`), stamp `status_date` with today's date, and append a short dated note to `notes`. Never restructure the file, reorder entries, or touch other entries.
+Set the matched entry's `status` (`applied` → `screening` → `tech_interview` → `final_round` → `offer` → `rejected`), stamp `status_date` with today's date, and append a short dated note to `notes`. Never restructure the file, reorder entries, or touch other entries.
+
+Stamp the stage's own date field too, with the date Step 2 collected rather than with today's: `screening_date`, `tech_interview_date`, `final_round_date`, `offer_date`, `rejected_date`. `status_date` records when the entry was moved; these record when the stage happened, which is what the board's rail measures the wait between. A stage booked ahead takes its future date here, which is what makes it read as booked rather than as done. No date collected, no write - leave the field absent rather than guessing today.
 
 Set `application_dir` to the archive folder Step 3 created or updated (repo-relative, no trailing slash), unless the entry already carries it. `/apply` writes the same field when it creates the folder; this is the branch for applications made outside that workflow. It is what lets the board show the CV, the prep packs and the outcome on the entry without guessing at a folder name.
 

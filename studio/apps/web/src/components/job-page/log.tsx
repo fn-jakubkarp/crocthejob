@@ -17,6 +17,7 @@ import {
 	type JourneyEvent,
 	redateEntry,
 	rewriteEntry,
+	rewriteProse,
 	todayISO,
 } from "@/lib/jobs";
 import { EVENT, type Hue, run } from "@/lib/strip";
@@ -250,14 +251,9 @@ export function JourneyLog({
 					look="line"
 					multiline
 					className="text-muted-foreground"
-					onSave={(text) => {
-						// The dated lines are kept and the prose replaced, so editing the
-						// standing note cannot eat the log.
-						const lines = (job.notes ?? "").split("\n");
-						const dated = new Set(log.entries.map((e) => e.line));
-						const kept = lines.filter((_, i) => dated.has(i));
-						onNotes([text, ...kept].filter(Boolean).join("\n"));
-					}}
+					// The dated lines stay where they were and only the prose is rewritten,
+					// so editing the standing note cannot eat the log or reorder it.
+					onSave={(text) => onNotes(rewriteProse(job.notes, log.entries, text))}
 				/>
 
 				<AddLine
