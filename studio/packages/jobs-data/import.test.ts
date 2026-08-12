@@ -56,3 +56,23 @@ test("ids are dropped, unknown statuses land in new, prototype keys are refused"
 	expect(Object.getPrototypeOf(file.seen)).toBe(Object.prototype);
 	expect(Object.hasOwn(file.seen, "__proto__")).toBe(false);
 });
+
+test("an application folder that is not one is dropped", () => {
+	const file: JobsFile = { seen: {} };
+	const counts = mergeImport(
+		file,
+		JSON.parse(`{
+			"a": { "title": "SDET", "company": "Acme", "application_dir": "documents/applications/acme_sdet" },
+			"b": { "title": "QA", "company": "Acme", "application_dir": "documents/applications/../../etc" },
+			"c": { "title": "QA2", "company": "Acme", "application_dir": "/etc/passwd" },
+			"d": { "title": "QA3", "company": "Acme", "application_dir": "documents/applications/acme_qa/" }
+		}`),
+	);
+
+	// Dropped as a field, never as the entry: the posting is still worth having.
+	expect(counts.added).toBe(4);
+	expect(file.seen.a.application_dir).toBe("documents/applications/acme_sdet");
+	expect(file.seen.b.application_dir).toBeUndefined();
+	expect(file.seen.c.application_dir).toBeUndefined();
+	expect(file.seen.d.application_dir).toBeUndefined();
+});

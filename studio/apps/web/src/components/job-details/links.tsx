@@ -1,11 +1,6 @@
-import {
-	CopyMinus,
-	ExternalLink,
-	FilePlus,
-	FileText,
-	Link,
-} from "lucide-react";
+import { CopyMinus, ExternalLink, Link, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { externalLink } from "@/lib/external-link";
 import { COLUMN_LABEL, columnOf, type DupCopy, type Job } from "@/lib/jobs";
 
 /**
@@ -72,17 +67,15 @@ function Links({
 	copy,
 	copies,
 	onUnlinkDuplicate,
-	onReadPosting,
-	onAddPosting,
+	onOpenJob,
 	onEditUrl,
 }: {
 	job: Job;
 	copy?: DupCopy;
 	copies?: DupCopy[];
 	onUnlinkDuplicate: (key: string) => void;
-	onReadPosting: () => void;
-	/** Opens the dialog that saves a hand-typed JD for an entry with none. */
-	onAddPosting: () => void;
+	/** Leaves the board for the entry's page, where the description is. */
+	onOpenJob: () => void;
 	/** Opens the edit dialog with the cursor already in the URL field. */
 	onEditUrl: () => void;
 }) {
@@ -110,12 +103,7 @@ function Links({
 						variant="outline"
 						size="sm"
 						className="flex-1"
-						// Renders an <a>, so base-ui must not expect a native <button> - it warns
-						// on every open otherwise.
-						nativeButton={false}
-						render={
-							<a href={job.url} target="_blank" rel="noreferrer noopener" />
-						}
+						{...externalLink(job.url)}
 					>
 						<ExternalLink className="size-3.5" />
 						Open the posting
@@ -131,29 +119,19 @@ function Links({
 						No link recorded
 					</Button>
 				)}
-				{/* The live listing on the left, the copy /scrape kept on the right. The
-				    saved text outlives the listing, which is the point of keeping it. */}
-				{job.posting_file ? (
-					<Button
-						variant="outline"
-						size="sm"
-						className="flex-1"
-						onClick={onReadPosting}
-					>
-						<FileText className="size-3.5" />
-						Read the saved copy
-					</Button>
-				) : (
-					<Button
-						variant="outline"
-						size="sm"
-						className="flex-1"
-						onClick={onAddPosting}
-					>
-						<FilePlus className="size-3.5" />
-						Nothing saved
-					</Button>
-				)}
+				{/* The live listing on the left, everything this board holds about the
+				    posting on the right. One button whatever the entry has: the page is
+				    where the description is read and where a missing one gets typed in. */}
+				<Button
+					variant="outline"
+					size="sm"
+					className="flex-1"
+					disabled={job.id === undefined}
+					onClick={onOpenJob}
+				>
+					<Maximize2 className="size-3.5" />
+					Open the full entry
+				</Button>
 			</div>
 		</>
 	);

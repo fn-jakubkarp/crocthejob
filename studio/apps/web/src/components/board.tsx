@@ -11,8 +11,8 @@ type Props = {
 	actions: JobActions;
 	selection: Selection;
 	dialogs: Dialogs;
-	/** Leaves the board: App switches to the reader on that path. */
-	onReadPosting: (path: string) => void;
+	/** Leaves the board: App switches to that entry's own page. */
+	onOpenJob: (id: number) => void;
 };
 
 /** The columns themselves. Every card callback is threaded through from here. */
@@ -22,7 +22,7 @@ export function Board({
 	actions,
 	selection,
 	dialogs,
-	onReadPosting,
+	onOpenJob,
 }: Props) {
 	const { byColumn } = data;
 
@@ -32,10 +32,13 @@ export function Board({
 		// gutters come back as content. The left padding is the rail's fixed
 		// footprint, which nothing reflows around. See AppRail.
 		<main className="flex flex-1 overflow-x-auto overflow-y-hidden pl-rail">
-			{view.shown.map((col) => (
+			{view.shown.map((col, i) => (
 				<BoardColumn
 					key={col.status}
 					{...col}
+					// The next *visible* column, so the ramp across the header strip stays
+					// continuous when one is hidden from the Columns menu.
+					nextStatus={view.shown[i + 1]?.status}
 					jobs={byColumn.map.get(col.status) ?? []}
 					totalUnfiltered={byColumn.totals.get(col.status) ?? 0}
 					dupes={data.dupes}
@@ -47,10 +50,9 @@ export function Board({
 					onStatus={actions.changeStatus}
 					onNotes={actions.changeNotes}
 					onEdit={dialogs.openEdit}
-					onReadPosting={onReadPosting}
+					onOpenJob={onOpenJob}
 					onDismiss={actions.dismiss}
 					onDelete={actions.remove}
-					onSavePosting={actions.savePosting}
 					selected={selection.keys}
 					onSelect={selection.toggle}
 					onBatchStatus={actions.batchStatus}

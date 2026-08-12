@@ -1,12 +1,13 @@
 import { formatDistanceToNow } from "date-fns";
 import { Copy } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import ReactMarkdown, { type Components } from "react-markdown";
+import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { toast } from "sonner";
 import { Outline } from "@/components/docs/outline";
 import { Button } from "@/components/ui/button";
 import { useOutline } from "@/hooks/use-outline";
+import { copyText } from "@/lib/copy";
+import { DOC_COMPONENTS } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
 
 type Entry = {
@@ -37,37 +38,13 @@ const label = (dir: string) => {
 const filename = (file: string) => file.slice(file.lastIndexOf("/") + 1);
 
 /**
- * Only the pieces the surrounding CSS cannot reach. Everything visual is in the `.doc`
- * block in index.css, so the map stays at what needs a different element: a table that
- * has to be able to scroll without taking the page sideways with it, and links that
- * leave the app.
- */
-const COMPONENTS: Components = {
-	table: ({ children, ...props }) => (
-		<div className="doc-table">
-			<table {...props}>{children}</table>
-		</div>
-	),
-	a: ({ children, href, ...props }) => (
-		<a
-			href={href}
-			target={href?.startsWith("http") ? "_blank" : undefined}
-			rel={href?.startsWith("http") ? "noreferrer" : undefined}
-			{...props}
-		>
-			{children}
-		</a>
-	),
-};
-
-/**
  * The documents, read in the app.
  *
  * THESIS. The CVs, postings and profile notes are the output of everything else in
  * this repo, and until now they were only readable in an editor. This is the reading
- * room for them: one index, one page, one outline. It writes nothing - Claude writes
- * these files from the chat page, and a reader that could also edit would put the
- * repo's real source of truth behind a textarea.
+ * room for them: one index, one page, one outline. It writes nothing - the skills write
+ * these files, from a job page's run panel or from the terminal, and a reader that could
+ * also edit would put the repo's real source of truth behind a textarea.
  *
  * WORLD. The board's, one plane further down. There a recessed well holds raised
  * cards; here a recessed index holds the file you are on, raised, in the same tile
@@ -272,8 +249,8 @@ export function DocsPage({ path }: { path?: string | null }) {
 								<p className="text-muted-foreground mx-auto mt-2 max-w-sm text-body leading-relaxed">
 									This reads the markdown under{" "}
 									<span className="font-data">documents/</span> and the
-									application assistant's notes. Ask Claude on the Chat page for
-									a tailored CV and it lands here.
+									application assistant's notes. Run Tailor CV on an entry's own
+									page and the draft lands here.
 								</p>
 							</div>
 						)}
@@ -289,12 +266,7 @@ export function DocsPage({ path }: { path?: string | null }) {
 											variant="ghost"
 											size="icon-sm"
 											aria-label="Copy markdown"
-											onClick={() => {
-												void navigator.clipboard
-													.writeText(text)
-													.then(() => toast.success("Markdown copied"))
-													.catch(() => toast.error("Clipboard refused"));
-											}}
+											onClick={() => copyText(text, "Markdown")}
 										>
 											<Copy />
 										</Button>
@@ -310,7 +282,7 @@ export function DocsPage({ path }: { path?: string | null }) {
 								<div ref={docRef} className="doc">
 									<ReactMarkdown
 										remarkPlugins={[remarkGfm]}
-										components={COMPONENTS}
+										components={DOC_COMPONENTS}
 									>
 										{body}
 									</ReactMarkdown>

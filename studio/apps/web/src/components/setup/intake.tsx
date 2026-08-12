@@ -13,7 +13,16 @@ import type { Status } from "@/lib/jobs";
 import { cn } from "@/lib/utils";
 
 /**
- * THE INTAKE SHEET — the first run, and only the first run.
+ * THE INTAKE SHEET — the first run, and every visit to Setup after it.
+ *
+ * ONE SURFACE, NOT TWO. This was the first run and a settings dialog was the way back
+ * in: the same four sections, one at a time, in a box over the board. Two renditions of
+ * one thing, and the smaller one was the one you saw every time after the first. Setup
+ * is a section of the app now - the rail goes to it like any other - so what you learned
+ * to read on the first run is what is there on the tenth.
+ *
+ * Embedded, it keeps the rail beside it and takes the space that is left; on the first
+ * run it takes the whole window, because there is nothing behind it yet to look at.
  *
  * THESIS. Not a wizard. Four dialogs with a Next key make setup a thing to click
  * through; this is one sheet you move down, with a spine that prints each answer
@@ -41,10 +50,12 @@ type Props = {
 	/** Real column populations, so the columns field previews the actual board. */
 	counts: Map<Status, number>;
 	onImported: () => void;
-	/** Walked out of, unfinished. The rail carries the way back in. */
+	/** Left without finishing. The rail carries the way back in. */
 	onLater: () => void;
 	/** Every section answered. */
 	onDone: () => void;
+	/** Opened from the rail, with the app around it, rather than as the first run. */
+	embedded?: boolean;
 };
 
 const THEME_LABEL: Record<string, string> = {
@@ -59,6 +70,7 @@ export function SetupIntake({
 	onImported,
 	onLater,
 	onDone,
+	embedded = false,
 }: Props) {
 	const { setup, save } = useSetup();
 	const { theme } = useTheme();
@@ -144,7 +156,15 @@ export function SetupIntake({
 	const fill = (active + 1) / sections.length;
 
 	return (
-		<main className="flex h-screen flex-col overflow-hidden lg:flex-row">
+		<main
+			className={cn(
+				"flex flex-col overflow-hidden lg:flex-row",
+				// The app rail is fixed, so an embedded page pays for it as a left inset
+				// and takes whatever height the shell has left. On the first run there is
+				// no rail and no shell, and the sheet is the window.
+				embedded ? "min-h-0 flex-1 pl-rail" : "h-screen",
+			)}
+		>
 			{/* THE SPINE. Fixed beside the sheet, never scrolling with it: it is the
 			    one thing that has to stay legible while the reader is four screens
 			    down and wondering what they already answered. */}
@@ -153,14 +173,28 @@ export function SetupIntake({
 				className="bg-surface flex shrink-0 flex-col gap-3 border-b border-border p-3 duration-300 ease-out animate-in fade-in-0 slide-in-from-left-3 motion-reduce:animate-none lg:w-60 lg:border-r lg:border-b-0 lg:gap-5 lg:p-4"
 			>
 				<div className="flex items-center gap-2">
-					<Mark className="text-foreground size-6" />
-					<span className="label text-foreground text-meta">Croc the Job</span>
+					{/* The mark only where nothing else is carrying it. Embedded, the app
+					    rail is flush against this spine and already has it, and two marks
+					    forty pixels apart is the app introducing itself twice. What the
+					    spine says here instead is which section you are in. */}
+					{embedded ? (
+						<span className="label text-foreground text-meta">Setup</span>
+					) : (
+						<>
+							<Mark className="text-foreground size-6" />
+							<span className="label text-foreground text-meta">
+								Croc the Job
+							</span>
+						</>
+					)}
 					{/* The way out, in the one place it is on screen at every width, and
 					    ranked as a control rather than a word left beside the mark. Escape
 					    does the same. */}
 					<span className="ml-auto flex items-center gap-2.5 border-l border-border pl-2.5">
+						{/* "Later" only means anything on a run nobody has finished. Opened
+						    from the rail it is simply the way back. */}
 						<Button variant="outline" size="xs" onClick={onLater}>
-							Later
+							{embedded ? "Board" : "Later"}
 						</Button>
 					</span>
 				</div>
@@ -325,10 +359,12 @@ export function SetupIntake({
 					    same ghost word in both places was two answers to one question. */}
 					<div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
 						<p className="text-muted-foreground text-body">
-							All of it is under Setup once the board is open.
+							{embedded
+								? "Every answer here can be changed again, any time."
+								: "All of it is under Setup once the board is open."}
 						</p>
 						<Button size="sm" onClick={finish}>
-							Open the board
+							{embedded ? "Back to the board" : "Open the board"}
 							<ArrowRight data-icon="inline-end" />
 						</Button>
 					</div>

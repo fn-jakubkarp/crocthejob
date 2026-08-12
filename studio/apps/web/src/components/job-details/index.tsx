@@ -27,10 +27,8 @@ type Props = {
 	onStatus: (status: Status) => void;
 	onNotes: (notes: string) => Promise<void>;
 	onEdit: (focus?: "url") => void;
-	/** Opens `posting_file` in the document reader. */
-	onReadPosting: () => void;
-	/** Opens the dialog that saves a hand-typed JD for an entry with none. */
-	onAddPosting: () => void;
+	/** Leaves the board for the entry's page, where the description is. */
+	onOpenJob: () => void;
 	onUnlinkDuplicate: (key: string) => void;
 	onOutcome: (tag: OutcomeId) => void;
 	onClearOutcome: () => void;
@@ -44,8 +42,7 @@ export function JobDetails({
 	onStatus,
 	onNotes,
 	onEdit,
-	onReadPosting,
-	onAddPosting,
+	onOpenJob,
 	onUnlinkDuplicate,
 	onOutcome,
 	onClearOutcome,
@@ -76,8 +73,7 @@ export function JobDetails({
 				copy={copy}
 				copies={copies}
 				onUnlinkDuplicate={onUnlinkDuplicate}
-				onReadPosting={onReadPosting}
-				onAddPosting={onAddPosting}
+				onOpenJob={onOpenJob}
 				onEditUrl={() => onEdit("url")}
 			/>
 		</>

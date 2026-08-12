@@ -167,7 +167,7 @@ Claude will:
 ## 7. Export your document
 
 `/apply` writes a tailored CV in markdown to
-`documents/applications/<Company>_<Role>/cv_<company>.md`, plus an edit summary in chat listing
+`documents/applications/<company>_<role>/cv_<company>.md`, plus an edit summary in chat listing
 what was cut, moved and reworded. Paste the content into your own layout and export the PDF from
 there. If you want the ATS text-layer check run against that export, say so and hand over the PDF.
 

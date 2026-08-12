@@ -9,13 +9,14 @@ The candidate builds the final document themselves from the markdown.
 **Master CV:** `documents/cv/master_cv.md` - the single strong CV, kept slightly
 over-length on purpose. Tailoring is subtraction and reordering, not rewriting.
 
-**Output file:** `documents/applications/<Company>_<Role>/cv_<company>.md`
+**Output file:** `documents/applications/<company>_<role>/cv_<company>.md`
 
 The application folder is the unit of work. It holds the posting, the tailored CV and any
-interview prep for that one application.
+interview prep for that one application. Lowercase, underscores for spaces, one convention
+across `/apply`, `/outcome`, `/interview` and the board.
 
-```
-documents/applications/Acme_QA_Engineer/
+```text
+documents/applications/acme_qa_engineer/
     job_posting.md
     cv_submitted.md          <- name it cv_submitted.md once actually sent
     interview_prep_screening.md

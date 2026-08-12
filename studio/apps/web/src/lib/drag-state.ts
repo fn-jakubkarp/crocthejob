@@ -6,11 +6,20 @@
  *   [data-dragging="true"]     -> the source card shows it is the one moving
  *   [data-seated]              -> the track that just took a card settles once
  *   [data-arrived]             -> the card that just landed
+ *
+ * The landed card also flashes the move itself - the hue of the column it left running
+ * into the hue of the one it landed in, the same stroke the toast reporting that write
+ * carries. Every column sets `--evt` on its wrapper, so the destination hue is already
+ * inherited; the only thing this file has to carry across the drag is where the card
+ * came from, as `--evt-from`. A custom property, like every other affordance here, so a
+ * drag still re-renders nothing.
  */
 
 import { DRAG_TYPE } from "@/lib/jobs";
 
 let source: HTMLElement | null = null;
+/** The hue of the column the drag started in. Read off the inline style, so no recalc. */
+let from = "";
 let pending = 0;
 let seated: HTMLElement | null = null;
 let arrived: HTMLElement | null = null;
@@ -22,6 +31,8 @@ let seatTimer: ReturnType<typeof setTimeout> | null = null;
  */
 export function beginDrag(el: HTMLElement): void {
 	source = el;
+	const column = el.closest<HTMLElement>("[data-column]");
+	from = column?.style.getPropertyValue("--evt") ?? "";
 	if (pending) cancelAnimationFrame(pending);
 	pending = requestAnimationFrame(() => {
 		pending = 0;
@@ -82,7 +93,10 @@ function seat(target: EventTarget | null, key: string): void {
 function clearSeat(): void {
 	seatTimer = null;
 	if (seated) delete seated.dataset.seated;
-	if (arrived) delete arrived.dataset.arrived;
+	if (arrived) {
+		delete arrived.dataset.arrived;
+		arrived.style.removeProperty("--evt-from");
+	}
 	seated = null;
 	arrived = null;
 }
@@ -93,6 +107,10 @@ function markArrival(zone: HTMLElement, key: string, attempt: number): void {
 		const card = zone.querySelector(`[data-key="${CSS.escape(key)}"]`);
 		if (card instanceof HTMLElement) {
 			arrived = card;
+			// Where it came from. Set before the attribute, so the stroke draws with both
+			// ends already known; unset, it falls back to the hue of the column it landed
+			// in, which is one colour and no gradient - a card dropped back where it was.
+			if (from) card.style.setProperty("--evt-from", from);
 			card.dataset.arrived = "true";
 		} else if (attempt < 2) {
 			markArrival(zone, key, attempt + 1);

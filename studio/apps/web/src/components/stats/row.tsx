@@ -12,6 +12,7 @@ import {
 	ContextMenuSubTrigger,
 	ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { externalLink } from "@/lib/external-link";
 import {
 	COLUMNS,
 	columnOf,
@@ -63,12 +64,7 @@ function Menu({
 				Show on the board
 			</ContextMenuItem>
 			{job.url && (
-				<ContextMenuItem
-					render={
-						<a href={job.url} target="_blank" rel="noreferrer noopener" />
-					}
-					nativeButton={false}
-				>
+				<ContextMenuItem {...externalLink(job.url)}>
 					<ExternalLink />
 					Open the posting
 				</ContextMenuItem>

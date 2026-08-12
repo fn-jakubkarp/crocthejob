@@ -9,7 +9,9 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { COLUMN_LABEL, type Job, type Status } from "@/lib/jobs";
+import { COLUMN_LABEL, columnOf, type Job, type Status } from "@/lib/jobs";
+import { run, STATUS_HUE } from "@/lib/strip";
+import { cn } from "@/lib/utils";
 
 type Props = {
 	open: boolean;
@@ -47,8 +49,21 @@ export function StageDateDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
+			{/* The dialog wears the move it is asking about: the hue of the column the
+			    entry is in running into the hue of the one it is going to, along the
+			    bottom edge - the same stroke the toast confirming the write will carry, so
+			    the question and the answer are one object twice. A batch drops the first
+			    hue, since the selection did not all come from one column. */}
 			<DialogContent
-				className="sm:max-w-md"
+				className={cn("sm:max-w-md", status && "hue-run")}
+				style={
+					status
+						? run(
+								STATUS_HUE[status],
+								!batch && job ? STATUS_HUE[columnOf(job)] : undefined,
+							)
+						: undefined
+				}
 				initialFocus={() => inputRef.current}
 			>
 				<DialogHeader>

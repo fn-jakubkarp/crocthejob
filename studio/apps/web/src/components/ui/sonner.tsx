@@ -28,14 +28,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
 				{
 					"--normal-bg": "var(--popover)",
 					"--normal-text": "var(--popover-foreground)",
+					// Sonner draws a 1px border on every toast. Made invisible rather
+					// than removed, so the toast keeps one set of box metrics whatever
+					// else is painted on it.
 					"--normal-border": "transparent",
-					"--border-radius": "10px",
+					"--border-radius": "var(--radius-well)",
 				} as React.CSSProperties
 			}
 			toastOptions={{
 				classNames: {
-					// The build's one float elevation, not sonner's own shadow.
-					toast: "elev-float border-0! text-body font-medium",
+					// No elevation class here. Sonner's own rules are unlayered and beat
+					// any Tailwind utility, so `elev-float` never applied; index.css
+					// claims the shadow at a selector that wins.
+					toast: "text-body font-medium",
 					description: "text-muted-foreground text-meta!",
 					// Sonner's default is the palette inverted - a white slab on a dark
 					// toast. Undo is the build's secondary key instead: a plane and a

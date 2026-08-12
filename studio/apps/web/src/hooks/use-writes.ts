@@ -1,5 +1,5 @@
 import { staleAfterMove } from "@jobsearch/jobs-data";
-import { type CSSProperties, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import type { JobsStore } from "@/hooks/use-jobs";
 import type { Selection } from "@/hooks/use-selection";
@@ -11,7 +11,7 @@ import {
 	type JobChanges,
 	merged,
 } from "@/lib/jobs";
-import { HUE, STATUS_HUE } from "@/lib/strip";
+import { run, STATUS_HUE } from "@/lib/strip";
 
 /**
  * What a status change silently sweeps up, said in the toast rather than left for the
@@ -56,10 +56,10 @@ function hued(to: JobChanges, from?: Job) {
 	if (!landed) return {};
 	return {
 		className: "toast-hue",
-		style: {
-			"--evt": HUE[STATUS_HUE[landed]],
-			...(from ? { "--evt-from": HUE[STATUS_HUE[columnOf(from)]] } : {}),
-		} as CSSProperties,
+		style: run(
+			STATUS_HUE[landed],
+			from ? STATUS_HUE[columnOf(from)] : undefined,
+		),
 	};
 }
 

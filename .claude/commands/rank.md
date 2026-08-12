@@ -13,6 +13,10 @@ Follow these steps **in order**.
 `$ARGUMENTS` may contain:
 
 - Nothing → rank all jobs with status `new` in `data/jobs.json`
+- `#<id>` (e.g. `/rank #153`) → score that one entry, whatever status it holds. This is the board's Rank button, and a person pointing at one posting has already decided it is worth a score, so none of Step 1's filters apply to it. Two of them are worth saying out loud in the run's output when they would have stopped it:
+  - the entry is `skipped` → score it, and report that a hand-set veto was overridden. **Leave `notes` exactly as it is** - the reason the user wrote is theirs, and the new score does not answer it.
+  - the entry is `duplicate_of` another → score it, and name the entry it is filed under, so the user can see they may be scoring a copy.
+  No entry with that id → say so and stop.
 - A focus area (e.g. `/rank data science`) → rank only jobs whose title or stored fit-notes match the focus
 - `--all` → re-rank every job that has not been applied to and has not been dismissed, including previously ranked ones (useful after the profile changes)
 - `--top <N>` → shortlist size (default 5)
@@ -23,7 +27,7 @@ Follow these steps **in order**.
 
 1. Read `data/jobs.json`. If the file is missing or has no entries, tell the user to run `/scrape` first and stop.
 2. Build the exclusion set from the same file: any company+role held by an entry whose status is `applied`, `screening`, `tech_interview`, `offer` or `rejected` is out of scope regardless of flags - it has been applied to already. Match on company and role, not on the key, so a second posting of a role already applied to is excluded too.
-3. Select candidates: entries with status `new` (or all non-applied entries with `--all`), minus the exclusion set, filtered by the focus area if one was given.
+3. Select candidates: entries with status `new` (or all non-applied entries with `--all`), minus the exclusion set, filtered by the focus area if one was given. **`#<id>` skips this step entirely** - that entry is the candidate list, and the exclusions below do not apply to it.
    - **Entries whose `duplicate_of` is a key are never candidates, `--all` included.** That entry is a copy of another posting on the board — either the same URL under tracking parameters, or a cross-portal repost the user confirmed. Scoring it would spend a full evaluation to produce a second reading of a posting already in the list. The entry it points at is a candidate as normal. A `duplicate_of` of `null` means the user checked and ruled it standalone, so it **is** a candidate.
    - **Entries with status `dismissed` are never candidates, `--all` included.** The user ruled that posting out by hand on the board and wrote the reason into its `notes` - re-scoring it would put a posting they have already rejected back in front of them, and a high score would not change the reason. Do not clear or overwrite `notes` on those entries. If `--all` skipped any, say how many in one line ("3 dismissed entries left alone") so the omission is visible rather than silent.
 4. If no candidates remain, say so ("Nothing new to rank - run /scrape to find fresh postings") and stop.
@@ -85,6 +89,7 @@ Sort by overall score (descending), urgency as tiebreaker.
 Update `data/jobs.json` in place - these fields are additive to the scraper's schema:
 
 - Ranked jobs: set `"status": "ranked"` and add `"rank_score": <overall>`, `"rank_verdict": "<band>"`, `"rank_date": "YYYY-MM-DD"`
+- **A score never overwrites an application or a closed entry.** An entry at `applied`, `screening`, `tech_interview`, `final_round`, `offer` or `rejected` keeps the status it has: the `rank_*` fields are written, the status line is not. This only comes up through `#<id>`, which skips Step 1's exclusions, and it is the one exclusion the direct form still has to honour - `ranked` over `screening` throws away the record of an application in flight to store a triage score. Say so in the output: "scored, status left at screening".
 - `"rank_location": "<the agent's `location` string>"` - the place, verbatim from the posting. Never `PASS`/`FLAG`/`FAIL`; entries ranked before this change still carry those and the board translates them, but do not write a new one.
 - `"rank_location_note": "<the agent's `location_note`>"` whenever there was one. Omit the key otherwise.
 - **Do not re-rank already-ranked entries just to backfill the location.** Their `rank_location` stays as it is until `--all` or a fresh `/rank` reaches them on its own; a re-read of 113 postings to replace one word is not worth the tokens.
@@ -92,7 +97,7 @@ Update `data/jobs.json` in place - these fields are additive to the scraper's sc
 - **Never write, renumber or drop `next_id` (file root), or an entry's `id`, `status_date`, `applied_date`, `duplicate_of` or `outcome`.** Those six are the kanban board's; `id` in particular is the stable number the user names a posting by, so a rewrite that reassigns it breaks every reference. See the table in `.claude/skills/job-scraper/SKILL.md` Step 4.
 - **`ghosted` and `withdrawn` are not statuses any more.** An application that ended is `status: "rejected"` with the reason in `outcome`. Do not write the old values, and treat a `rejected` entry as closed whatever its tags say.
 
-Never move an entry into an application stage (`applied`, `screening`, `tech_interview`, `offer`, `rejected`) - those record applications, and `/rank` never applies. Re-running `/rank` is idempotent: already-`ranked` jobs are skipped unless `--all` re-scores them.
+Never move an entry into an application stage (`applied`, `screening`, `tech_interview`, `final_round`, `offer`, `rejected`), and never move one out of it either - those record applications, and `/rank` never applies. Re-running `/rank` is idempotent: already-`ranked` jobs are skipped unless `--all` re-scores them.
 
 ---
 

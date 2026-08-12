@@ -1,12 +1,31 @@
 import { columnOf, type Status } from "./status";
 import type { Job } from "./types";
 
+/**
+ * Today, as the person looking at it would write it. From the local parts, not
+ * `toISOString()`: east of UTC that reads yesterday for the first hours of every day,
+ * which is exactly when a log entry gets typed.
+ */
+export function todayISO(now = new Date()): string {
+	const month = String(now.getMonth() + 1).padStart(2, "0");
+	const day = String(now.getDate()).padStart(2, "0");
+	return `${now.getFullYear()}-${month}-${day}`;
+}
+
 /** `2026-09-22` → `09-22`. */
 export function shortDate(iso: string): string {
 	return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.slice(5) : iso;
 }
 
 const ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * A stored value only if it is an ISO date. `data/jobs.json` is hand-edited and written
+ * by four skills, so a stray string reaches every reading that takes a date; the ones
+ * that hand it to a date library are where it becomes an Invalid Date on screen.
+ */
+export const isoDate = (value: unknown): string | undefined =>
+	typeof value === "string" && ISO.test(value) ? value : undefined;
 
 /**
  * ISO date as a UTC day number, or null. From the parts, not `new Date(iso)`: west
@@ -81,6 +100,27 @@ type StageAge = {
 	stale: boolean;
 };
 
+/**
+ * Whole days from one ISO date to another, or null if either is not one. Negative
+ * when `to` is the earlier of the two, which is a real answer: hand-set stage dates
+ * can be entered out of order, and smoothing that to zero would hide it.
+ */
+export function daysBetween(from: string, to: string): number | null {
+	const a = utcDay(from);
+	const b = utcDay(to);
+	return a === null || b === null ? null : Math.round((b - a) / DAY);
+}
+
+/**
+ * Days from today, signed. Negative is a date in the future, which is how a booked
+ * interview reads - and the one thing `elapsed` below deliberately refuses to say, since
+ * every *age* on a card would otherwise print a negative number.
+ */
+export function daysSince(iso: string, now = new Date()): number | null {
+	const day = utcDay(iso);
+	return day === null ? null : Math.round((startOfToday(now) - day) / DAY);
+}
+
 /** Days since an ISO date, or null for a bad or future one. */
 function elapsed(iso: string, now: Date): number | null {
 	const since = utcDay(iso);
@@ -137,6 +177,26 @@ export function stageSince(job: Job): string | undefined {
 		default:
 			return job.status_date ?? job.applied_date;
 	}
+}
+
+/**
+ * The earliest date the entry carries, which is what "how long have I been at this one"
+ * means. `applied_date` alone cannot answer it: most entries never get one, and an
+ * application logged without a date read as having taken no time at all.
+ *
+ * `posted` is deliberately out: that is the day the employer published, not the day this
+ * became one of ours.
+ */
+export function processSince(job: Job): string | undefined {
+	const dates = [job.first_seen, job.applied_date, job.rank_date].filter(
+		(date): date is string => typeof date === "string" && ISO.test(date),
+	);
+	return dates.length ? dates.reduce((a, b) => (a < b ? a : b)) : undefined;
+}
+
+/** Days since an ISO date, for callers that want the count rather than a phrase. */
+export function daysElapsed(iso: string, now = new Date()): number | null {
+	return elapsed(iso, now);
 }
 
 /**

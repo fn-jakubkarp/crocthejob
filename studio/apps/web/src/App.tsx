@@ -3,12 +3,12 @@ import { AppRail, type Section } from "@/components/app-rail";
 import { Board } from "@/components/board";
 import { BoardDialogs } from "@/components/board-dialogs";
 import { BoardDock } from "@/components/board-dock";
-import { ChatPage } from "@/components/chat-page";
 import { DocsPage } from "@/components/docs";
 import { HistoryPage } from "@/components/history-page";
+import { JobPage } from "@/components/job-page";
+import { SchemaDialog } from "@/components/schema-dialog";
 import { SelectionBar } from "@/components/selection-bar";
 import { SetupIntake } from "@/components/setup/intake";
-import { SetupWizard } from "@/components/setup/wizard";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
 import { StatsPage } from "@/components/stats-page";
 import { Toaster } from "@/components/ui/sonner";
@@ -18,6 +18,7 @@ import { useBoardView } from "@/hooks/use-board-view";
 import { useDialogs } from "@/hooks/use-dialogs";
 import { useJobActions } from "@/hooks/use-job-actions";
 import { useJobs } from "@/hooks/use-jobs";
+import { useRun } from "@/hooks/use-run";
 import { useSelection } from "@/hooks/use-selection";
 import { useSetup } from "@/hooks/use-setup";
 import { useShortcuts } from "@/hooks/use-shortcuts";
@@ -36,27 +37,33 @@ export default function App() {
 	const { actions, flow } = useJobActions(store, selection);
 	const dialogs = useDialogs();
 	const { setup, save } = useSetup();
+	// Mounted here, not on the job page: `/api/run` kills the child when the request
+	// closes, so walking back to the board mid-`/apply` would kill the run with it.
+	const run = useRun(store.reload);
 
 	const [section, setSection] = useState<Section>("board");
 	// The intake sheet takes the whole window, once, on the run where nobody has seen
-	// it. After that the rail is the way back in - a first run that reappears every
-	// launch until finished is a nag - and the way back is the dialog, not the sheet.
+	// it - a first run that reappears every launch until finished is a nag. After that
+	// the rail is the way back in, to the same sheet as a section of the app.
 	const [firstRun, setFirstRun] = useState(!setup.seen);
-	const [tuning, setTuning] = useState(false);
 	// A column the stats page asked for, held until the board has rendered it.
 	const [focus, setFocus] = useState<Status | null>(null);
-	// The document a card sent the reader to. Held rather than cleared on the way
-	// back, so the rail returns to what was open.
-	const [doc, setDoc] = useState<string | null>(null);
+	// The entry the job page is on, by `id` rather than by key: correcting a URL
+	// re-keys the entry, and the id is the one handle that is assigned once and never
+	// reused. See PRODUCT.md.
+	const [openId, setOpenId] = useState<number | null>(null);
 	const [helping, setHelping] = useState(false);
+	const [schema, setSchema] = useState(false);
 
 	useEffect(() => {
 		if (!setup.seen) save({ seen: true });
 	}, [setup.seen, save]);
 
-	// Offline has no chat page, so a section held over from an AI run falls back to the
-	// board rather than rendering something the rail no longer offers.
-	const current = setup.ai || section !== "chat" ? section : "board";
+	const open =
+		openId === null ? undefined : store.jobs.find((j) => j.id === openId);
+	// An entry that has gone - deleted, or the list reloaded without it - leaves the
+	// page rather than rendering an empty one.
+	const current = section !== "job" || open ? section : "board";
 
 	/**
 	 * The board's own keys are handed over only while the board is up: `r` on the stats
@@ -74,8 +81,10 @@ export default function App() {
 					board: () => setSection("board"),
 					stats: () => setSection("stats"),
 					history: () => setSection("history"),
-					...(setup.ai && { chat: () => setSection("chat") }),
 					docs: () => setSection("docs"),
+					// Only from a job page: everywhere else Escape belongs to whatever
+					// took the keyboard, and `use-shortcuts` stands down for those anyway.
+					...(current === "job" && { back: () => setSection("board") }),
 					...(current === "board" && {
 						search: () => document.getElementById("board-search")?.focus(),
 						add: dialogs.openAdd,
@@ -99,10 +108,10 @@ export default function App() {
 		});
 	}, [focus]);
 
-	/** The posting text a card kept, opened in the reader. */
-	const openDoc = (path: string) => {
-		setDoc(path);
-		setSection("docs");
+	/** One entry, at full size. The card's plain click still opens the popover. */
+	const openJob = (id: number) => {
+		setOpenId(id);
+		setSection("job");
 	};
 
 	/**
@@ -140,7 +149,8 @@ export default function App() {
 					section={current}
 					onSection={setSection}
 					onHelp={() => setHelping(true)}
-					onSetup={() => setTuning(true)}
+					onSetup={() => setSection("setup")}
+					onSchema={() => setSchema(true)}
 				/>
 
 				{store.error && (
@@ -150,10 +160,38 @@ export default function App() {
 					</div>
 				)}
 
-				{current === "chat" ? (
-					<ChatPage />
+				{current === "job" && open ? (
+					<JobPage
+						job={open}
+						onBack={() => setSection("board")}
+						onStatus={(status) => actions.changeStatus(open.key, status)}
+						onNotes={(notes) => actions.changeNotes(open.key, notes)}
+						onPatch={(changes) => actions.patch(open.key, changes)}
+						// Corrections made in place go the dialog's own way, so a re-key
+						// from a fixed URL is followed rather than losing the entry.
+						onSaveEdits={(changes) => {
+							void actions.saveEdits(open.key, changes).catch(() => {});
+						}}
+						onOutcome={(tag) => actions.toggleOutcome(open.key, tag)}
+						onClearOutcome={() => actions.clearOutcome(open.key)}
+						onSavePosting={actions.savePosting}
+						run={run}
+					/>
+				) : current === "setup" ? (
+					// The same sheet the first run is, with the rail beside it. It was a
+					// dialog holding the same four sections one at a time, which meant the
+					// screen everybody learns setup on was not the screen they ever saw
+					// again.
+					<SetupIntake
+						embedded
+						view={view}
+						counts={data.byColumn.totals}
+						onImported={() => void store.reload()}
+						onLater={() => setSection("board")}
+						onDone={() => setSection("board")}
+					/>
 				) : current === "docs" ? (
-					<DocsPage path={doc} />
+					<DocsPage />
 				) : current === "stats" ? (
 					<StatsPage
 						jobs={store.jobs}
@@ -179,7 +217,7 @@ export default function App() {
 							actions={actions}
 							selection={selection}
 							dialogs={dialogs}
-							onReadPosting={openDoc}
+							onOpenJob={openJob}
 						/>
 
 						<BoardDock
@@ -216,12 +254,7 @@ export default function App() {
 
 				<ShortcutsDialog open={helping} onOpenChange={setHelping} />
 
-				<SetupWizard
-					open={tuning}
-					onOpenChange={setTuning}
-					view={view}
-					onImported={() => void store.reload()}
-				/>
+				<SchemaDialog open={schema} onOpenChange={setSchema} />
 
 				<Toaster position="bottom-right" />
 			</div>

@@ -54,6 +54,13 @@ export type Job = {
 	 * existence check there is, so a deleted file reads as a failed open.
 	 */
 	posting_file?: string;
+	/**
+	 * Repo-relative path to this entry's application folder, no trailing slash. Written
+	 * by /apply, /outcome and /research, whichever creates it first. Read-only here:
+	 * `JobChanges` has no such field, so the board cannot invent a folder that has
+	 * nothing in it.
+	 */
+	application_dir?: string;
 	work_mode?: string;
 	salary?: string;
 	posted?: string;
