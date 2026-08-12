@@ -7,6 +7,8 @@ import { ChatPage } from "@/components/chat-page";
 import { DocsPage } from "@/components/docs";
 import { HistoryPage } from "@/components/history-page";
 import { SelectionBar } from "@/components/selection-bar";
+import { SetupIntake } from "@/components/setup/intake";
+import { SetupWizard } from "@/components/setup/wizard";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
 import { StatsPage } from "@/components/stats-page";
 import { Toaster } from "@/components/ui/sonner";
@@ -17,6 +19,7 @@ import { useDialogs } from "@/hooks/use-dialogs";
 import { useJobActions } from "@/hooks/use-job-actions";
 import { useJobs } from "@/hooks/use-jobs";
 import { useSelection } from "@/hooks/use-selection";
+import { useSetup } from "@/hooks/use-setup";
 import { useShortcuts } from "@/hooks/use-shortcuts";
 import type { Status } from "@/lib/jobs";
 
@@ -32,8 +35,14 @@ export default function App() {
 	const selection = useSelection(data.byColumn.map);
 	const { actions, flow } = useJobActions(store, selection);
 	const dialogs = useDialogs();
+	const { setup, save } = useSetup();
 
 	const [section, setSection] = useState<Section>("board");
+	// The intake sheet takes the whole window, once, on the run where nobody has seen
+	// it. After that the rail is the way back in - a first run that reappears every
+	// launch until finished is a nag - and the way back is the dialog, not the sheet.
+	const [firstRun, setFirstRun] = useState(!setup.seen);
+	const [tuning, setTuning] = useState(false);
 	// A column the stats page asked for, held until the board has rendered it.
 	const [focus, setFocus] = useState<Status | null>(null);
 	// The document a card sent the reader to. Held rather than cleared on the way
@@ -41,26 +50,41 @@ export default function App() {
 	const [doc, setDoc] = useState<string | null>(null);
 	const [helping, setHelping] = useState(false);
 
+	useEffect(() => {
+		if (!setup.seen) save({ seen: true });
+	}, [setup.seen, save]);
+
+	// Offline has no chat page, so a section held over from an AI run falls back to the
+	// board rather than rendering something the rail no longer offers.
+	const current = setup.ai || section !== "chat" ? section : "board";
+
 	/**
 	 * The board's own keys are handed over only while the board is up: `r` on the stats
 	 * page reloading a board nobody is looking at, or `/` reaching for a filter field that
 	 * is not mounted, are both worse than the key doing nothing. See `use-shortcuts`.
 	 */
-	useShortcuts({
-		help: () => setHelping(true),
-		board: () => setSection("board"),
-		stats: () => setSection("stats"),
-		history: () => setSection("history"),
-		chat: () => setSection("chat"),
-		docs: () => setSection("docs"),
-		...(section === "board" && {
-			search: () => document.getElementById("board-search")?.focus(),
-			add: dialogs.openAdd,
-			reload: () => void store.reload(),
-			columnsAll: view.showAllColumns,
-			columnsReset: view.resetColumns,
-		}),
-	});
+	useShortcuts(
+		// Nothing on the board is on screen during the first run, and its keys reach
+		// past the sheet into it: `r` reloads a board nobody is looking at, `/` reaches
+		// for a filter field that is not mounted.
+		firstRun
+			? {}
+			: {
+					help: () => setHelping(true),
+					board: () => setSection("board"),
+					stats: () => setSection("stats"),
+					history: () => setSection("history"),
+					...(setup.ai && { chat: () => setSection("chat") }),
+					docs: () => setSection("docs"),
+					...(current === "board" && {
+						search: () => document.getElementById("board-search")?.focus(),
+						add: dialogs.openAdd,
+						reload: () => void store.reload(),
+						columnsAll: view.showAllColumns,
+						columnsReset: view.resetColumns,
+					}),
+				},
+	);
 
 	useEffect(() => {
 		if (!focus) return;
@@ -93,13 +117,30 @@ export default function App() {
 		setFocus(status);
 	};
 
+	// The whole window, and nothing of the board behind it: this is the one screen
+	// where there is nothing yet to look at.
+	if (firstRun)
+		return (
+			<>
+				<SetupIntake
+					view={view}
+					counts={data.byColumn.totals}
+					onImported={() => void store.reload()}
+					onLater={() => setFirstRun(false)}
+					onDone={() => setFirstRun(false)}
+				/>
+				<Toaster position="bottom-right" />
+			</>
+		);
+
 	return (
 		<TooltipProvider>
 			<div className="flex h-screen flex-col">
 				<AppRail
-					section={section}
+					section={current}
 					onSection={setSection}
 					onHelp={() => setHelping(true)}
+					onSetup={() => setTuning(true)}
 				/>
 
 				{store.error && (
@@ -109,11 +150,11 @@ export default function App() {
 					</div>
 				)}
 
-				{section === "chat" ? (
+				{current === "chat" ? (
 					<ChatPage />
-				) : section === "docs" ? (
+				) : current === "docs" ? (
 					<DocsPage path={doc} />
-				) : section === "stats" ? (
+				) : current === "stats" ? (
 					<StatsPage
 						jobs={store.jobs}
 						dupes={data.dupes}
@@ -121,7 +162,7 @@ export default function App() {
 						onOutcome={actions.toggleOutcome}
 						onStatus={actions.changeStatus}
 					/>
-				) : section === "history" ? (
+				) : current === "history" ? (
 					<HistoryPage
 						jobs={store.jobs}
 						dupes={data.dupes}
@@ -174,6 +215,13 @@ export default function App() {
 				/>
 
 				<ShortcutsDialog open={helping} onOpenChange={setHelping} />
+
+				<SetupWizard
+					open={tuning}
+					onOpenChange={setTuning}
+					view={view}
+					onImported={() => void store.reload()}
+				/>
 
 				<Toaster position="bottom-right" />
 			</div>

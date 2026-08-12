@@ -4,11 +4,13 @@ import {
 	History,
 	Keyboard,
 	MessageSquare,
+	SlidersHorizontal,
 	SquareKanban,
 } from "lucide-react";
 import { DockLabel } from "@/components/dock-label";
 import { Mark } from "@/components/mark";
 import { Button } from "@/components/ui/button";
+import { useSetup } from "@/hooks/use-setup";
 import { cn } from "@/lib/utils";
 
 export type Section = "board" | "stats" | "history" | "chat" | "docs";
@@ -39,12 +41,20 @@ export function AppRail({
 	section,
 	onSection,
 	onHelp,
+	onSetup,
 }: {
 	section: Section;
 	onSection: (section: Section) => void;
 	/** Opens the shortcut panel. Bottom of the rail, clear of the section keys. */
 	onHelp: () => void;
+	/** Opens the setup wizard, which is also where every setting lives. */
+	onSetup: () => void;
 }) {
+	const { setup } = useSetup();
+	// Chat is the local Claude Code and nothing else, so an offline board has no use
+	// for the key at all.
+	const keys = KEYS.filter((key) => key.id !== "chat" || setup.ai);
+
 	return (
 		<nav
 			aria-label="Sections"
@@ -69,7 +79,7 @@ export function AppRail({
 				</DockLabel>
 			</div>
 
-			{KEYS.map(({ id, label, icon: Icon }) => {
+			{keys.map(({ id, label, icon: Icon }) => {
 				const current = section === id;
 				return (
 					<Button
@@ -97,12 +107,32 @@ export function AppRail({
 			})}
 
 			{/* `mt-auto` and no rule: the gap to the section keys is the separation, and a
-			    hairline across a two-glyph-wide gutter reads as a broken edge. Not a
-			    section, so no `aria-current` and no filled state - it opens a panel and
-			    hands focus straight back. */}
+			    hairline across a two-glyph-wide gutter reads as a broken edge. Neither of
+			    these is a section, so no `aria-current` and no filled state - they open a
+			    panel and hand focus straight back. */}
 			<Button
 				variant="ghost"
-				className="text-muted-foreground mt-auto justify-start gap-0 px-2.5 hover:bg-card hover:text-foreground"
+				className="text-muted-foreground relative mt-auto justify-start gap-0 px-2.5 hover:bg-card hover:text-foreground"
+				size="sm"
+				aria-label={setup.done ? "Setup" : "Finish setup"}
+				onClick={onSetup}
+			>
+				<SlidersHorizontal />
+				{/* The one lit thing in the rail, and only while the run is unfinished:
+				    a wizard walked out of halfway needs somewhere visible to come back to,
+				    and a dot is the smallest thing that says so from a shut gutter. */}
+				{!setup.done && (
+					<span
+						aria-hidden
+						className="bg-signal absolute top-1.5 right-1.5 size-1.5 rounded-full"
+					/>
+				)}
+				<DockLabel>{setup.done ? "Setup" : "Finish setup"}</DockLabel>
+			</Button>
+
+			<Button
+				variant="ghost"
+				className="text-muted-foreground justify-start gap-0 px-2.5 hover:bg-card hover:text-foreground"
 				size="sm"
 				aria-label="Keyboard shortcuts"
 				onClick={onHelp}

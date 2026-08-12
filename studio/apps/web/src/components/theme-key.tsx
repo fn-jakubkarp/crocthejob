@@ -19,7 +19,7 @@ export function ThemeKey() {
 			className="gap-0 px-2.5"
 			onClick={() => setTheme(dark ? "light" : "dark")}
 			aria-label={
-				dark ? "Switch to the light plate" : "Switch to the dark plate"
+				dark ? "Switch to the light theme" : "Switch to the dark theme"
 			}
 		>
 			{resolvedTheme ? (
@@ -32,9 +32,9 @@ export function ThemeKey() {
 			) : (
 				<span className="size-3.5" />
 			)}
-			{/* "Plate", not the theme being switched to: the label must not change
-			    width under the pointer while it is open. */}
-			<DockLabel>Plate</DockLabel>
+			{/* "Theme", not the one being switched to: the label must not change width
+			    under the pointer while it is open. */}
+			<DockLabel>Theme</DockLabel>
 		</Button>
 	);
 }

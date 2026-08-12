@@ -24,7 +24,7 @@ function withColumn(held: Status[], status: Status): Status[] {
 export type BoardView = {
 	query: string;
 	setQuery: (value: string) => void;
-	/** A `fit` value, or "all". */
+	/** A `fit` value, or "all". Survives a reload: the wizard sets it as a default. */
 	fit: string;
 	setFit: (value: string) => void;
 	/** Whether the copies the board normally hides are on screen. */
@@ -44,12 +44,12 @@ export type BoardView = {
 
 /**
  * What the user did to the view, not the data: the filter, which columns are up, how
- * each is sorted. Everything but the filter survives a reload.
+ * each is sorted. Everything but the search box survives a reload.
  */
 export function useBoardView(): BoardView {
 	const [query, setQuery] = useState("");
-	const [fit, setFit] = useState("all");
 
+	const [fit, setFit] = usePersisted<string>(LS.fit, "all");
 	const [showDupes, setShowDupes] = usePersisted<boolean>(LS.dupes, false);
 	const [visible, setVisible] = usePersisted<Status[]>(
 		LS.visible,

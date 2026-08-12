@@ -86,6 +86,26 @@ export async function createJob(draft: NewJob): Promise<Job> {
 	return (await res.json()) as Job;
 }
 
+/**
+ * Folds a jobs file exported somewhere else into this one. Additive: the server leaves
+ * every entry the board already holds exactly as it is.
+ */
+export async function importJobs(
+	payload: unknown,
+): Promise<{ added: number; skipped: number; dropped: number }> {
+	const res = await fetch(`${ENDPOINT}/import`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(payload),
+	});
+	if (!res.ok) throw await failure(res, `POST ${ENDPOINT}/import`);
+	return (await res.json()) as {
+		added: number;
+		skipped: number;
+		dropped: number;
+	};
+}
+
 /** Saves a hand-typed JD for an entry /scrape never kept one for. Returns its path. */
 export async function saveJobPosting(
 	key: string,

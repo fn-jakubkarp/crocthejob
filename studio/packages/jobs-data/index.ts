@@ -11,6 +11,7 @@ export {
 	roleClusters,
 	urlClusters,
 } from "./dupes.ts";
+export { mergeImport, readImport } from "./import.ts";
 export {
 	type Changes,
 	DATE_FIELDS,

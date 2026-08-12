@@ -18,6 +18,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import type { BoardData } from "@/hooks/use-board-data";
 import type { BoardView } from "@/hooks/use-board-view";
+import { useSetup } from "@/hooks/use-setup";
 import { cn } from "@/lib/utils";
 
 const FITS = [
@@ -56,6 +57,9 @@ export function BoardDock({
 	onReview,
 }: Props) {
 	const fit = FITS.find((f) => f.id === view.fit) ?? FITS[0];
+	// `fit` is /scrape's pre-check. An offline board never gets one, so filtering on it
+	// would be a key that empties the board and says nothing about why.
+	const { setup } = useSetup();
 
 	return (
 		<div className="pointer-events-none fixed inset-x-0 bottom-[100px] z-40 flex justify-center px-3">
@@ -83,33 +87,35 @@ export function BoardDock({
 
 				{/* A menu rather than a select, so the fit filter opens the same way
 				    every other key on the plate does. */}
-				<DropdownMenu>
-					<DropdownMenuTrigger
-						render={
-							<Button variant="outline" size="sm" className="gap-0 px-2.5" />
-						}
-						aria-label={`Fit filter, ${fit.label}`}
-					>
-						<Gauge />
-						<DockLabel>{fit.label}</DockLabel>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent side="top" align="start" className="w-44">
-						<DropdownMenuGroup>
-							<DropdownMenuLabel>Show which fit</DropdownMenuLabel>
-						</DropdownMenuGroup>
-						<DropdownMenuSeparator />
-						<DropdownMenuRadioGroup
-							value={view.fit}
-							onValueChange={(v) => view.setFit(v ?? "all")}
+				{setup.ai && (
+					<DropdownMenu>
+						<DropdownMenuTrigger
+							render={
+								<Button variant="outline" size="sm" className="gap-0 px-2.5" />
+							}
+							aria-label={`Fit filter, ${fit.label}`}
 						>
-							{FITS.map((f) => (
-								<DropdownMenuRadioItem key={f.id} value={f.id}>
-									{f.label}
-								</DropdownMenuRadioItem>
-							))}
-						</DropdownMenuRadioGroup>
-					</DropdownMenuContent>
-				</DropdownMenu>
+							<Gauge />
+							<DockLabel>{fit.label}</DockLabel>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent side="top" align="start" className="w-44">
+							<DropdownMenuGroup>
+								<DropdownMenuLabel>Show which fit</DropdownMenuLabel>
+							</DropdownMenuGroup>
+							<DropdownMenuSeparator />
+							<DropdownMenuRadioGroup
+								value={view.fit}
+								onValueChange={(v) => view.setFit(v ?? "all")}
+							>
+								{FITS.map((f) => (
+									<DropdownMenuRadioItem key={f.id} value={f.id}>
+										{f.label}
+									</DropdownMenuRadioItem>
+								))}
+							</DropdownMenuRadioGroup>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				)}
 
 				<Separator orientation="vertical" className="h-5" />
 

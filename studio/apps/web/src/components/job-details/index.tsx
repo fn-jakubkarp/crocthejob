@@ -7,6 +7,7 @@ import { Notes } from "@/components/job-details/notes";
 import { Outcome } from "@/components/job-details/outcome";
 import { ScoreFit } from "@/components/job-details/score-fit";
 import { Stage } from "@/components/job-details/stage";
+import { useSetup } from "@/hooks/use-setup";
 import {
 	COLUMNS,
 	columnOf,
@@ -56,11 +57,19 @@ export function JobDetails({
 	// Untouched by /rank: nearly every field in the grid below would be a dash, so the
 	// fixed frame is dropped and only what exists is shown.
 	const bare = !scored && lane === "intake";
+	// An offline board never runs /rank, so the two readings and their breakdown are a
+	// permanent "not scored - run /rank" pointing at a command that is not part of this
+	// setup. The panel drops them rather than nagging.
+	const { setup } = useSetup();
 
 	const summary = (
 		<>
-			<ScoreFit job={job} scored={scored} lane={lane} />
-			<Meters dims={job.rank_dimensions} />
+			{setup.ai && (
+				<>
+					<ScoreFit job={job} scored={scored} lane={lane} />
+					<Meters dims={job.rank_dimensions} />
+				</>
+			)}
 			<Facts job={job} bare={bare} lane={lane} />
 			<Links
 				job={job}

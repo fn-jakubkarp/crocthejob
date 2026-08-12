@@ -1,4 +1,5 @@
 import { ExternalLink, Ghost } from "lucide-react";
+import { useSetup } from "@/hooks/use-setup";
 import {
 	columnOf,
 	type DupCopy,
@@ -44,6 +45,9 @@ function CardFace({
 }) {
 	const current = columnOf(job);
 	const archive = lane === "archive";
+	// Both readings on the tile are the AI's: /rank's score and /scrape's pre-check. An
+	// offline board shows neither, and keeps the row for the id, the wait and the deadline.
+	const { setup } = useSetup();
 	const fit = job.fit ?? "low";
 	// Local so TypeScript narrows it for `scoreLamp`.
 	const score = job.rank_score;
@@ -133,9 +137,11 @@ function CardFace({
 						</span>
 					</span>
 				)}
-				{!archive && <span aria-hidden className="lamp size-1.5 shrink-0" />}
+				{!archive && setup.ai && (
+					<span aria-hidden className="lamp size-1.5 shrink-0" />
+				)}
 				{/* /scrape's pre-check, shown only until /rank has scored the entry. */}
-				{!archive && !scored && job.fit && (
+				{!archive && setup.ai && !scored && job.fit && (
 					<span
 						className={cn(
 							"font-stretch-[86%] text-data font-semibold tracking-[0.07em] uppercase",
@@ -146,7 +152,7 @@ function CardFace({
 					</span>
 				)}
 
-				{!archive && scored && (
+				{!archive && setup.ai && scored && (
 					<span className="text-foreground rounded-chip border border-border bg-background px-1.5 py-px font-data text-data font-semibold tabular-nums">
 						{score}
 					</span>

@@ -1,7 +1,7 @@
-import { readdir, readFile, stat } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Plugin, ViteDevServer } from "vite";
-import { json } from "./http.ts";
+import { json, readBody } from "./http.ts";
 
 /** The repo root, same reckoning as the chat API: the app lives four levels down. */
 const ROOT = path.resolve(import.meta.dirname, "../../../..");
@@ -12,6 +12,18 @@ const ROOT = path.resolve(import.meta.dirname, "../../../..");
  * reading those next to the output is the point of the page.
  */
 const ROOTS = ["documents", ".claude/skills/job-application-assistant"];
+
+/**
+ * The three documents the setup wizard writes, named in full rather than derived from a
+ * folder rule. Everything else the reader lists is written by Claude or by a skill, and
+ * a writable path built out of user input is how a reader becomes an editor for the
+ * whole repo.
+ */
+const WRITABLE = new Set([
+	"documents/cv/master_cv.md",
+	"documents/linkedin/Profile.md",
+	"documents/references/professional-record.md",
+]);
 
 /** Repo-relative .md paths under `dir`, or nothing if the folder is absent. */
 async function walk(dir: string): Promise<string[]> {
@@ -57,11 +69,13 @@ function titleOf(text: string): string | undefined {
 /**
  * The document reader's API, a dev-server plugin like the other two.
  *
- * GET /api/files            every .md under the allowed roots, titled and dated
- * GET /api/files?path=<rel> that one file's text
+ * GET  /api/files            every .md under the allowed roots, titled and dated
+ * GET  /api/files?path=<rel> that one file's text
+ * POST /api/files            `{ path, text }`, for the three documents in WRITABLE
  *
- * Read-only on purpose: the page is for reading what the skills wrote, and Claude
- * already writes these files from chat.
+ * Read-only but for those three: the page is for reading what the skills wrote, and
+ * Claude already writes these files from chat. The wizard needs somewhere to put a CV on
+ * a first run, when there is no profile for Claude to write one from yet.
  */
 export function filesApi(): Plugin {
 	return {
@@ -70,12 +84,35 @@ export function filesApi(): Plugin {
 			const logger = server.config.logger;
 
 			server.middlewares.use("/api/files", async (req, res, next) => {
-				if (req.method !== "GET") {
+				if (req.method !== "GET" && req.method !== "POST") {
 					next();
 					return;
 				}
 
 				try {
+					if (req.method === "POST") {
+						const body = (await readBody(req)) as Record<string, unknown>;
+						const rel = typeof body?.path === "string" ? body.path : "";
+						if (!WRITABLE.has(rel)) {
+							json(res, 400, { error: "that document is not writable" });
+							return;
+						}
+						if (typeof body.text !== "string") {
+							json(res, 400, { error: "`text` must be a string" });
+							return;
+						}
+						const abs = path.resolve(ROOT, rel);
+						// The folders ship empty, so a first run creates the one it needs.
+						await mkdir(path.dirname(abs), { recursive: true });
+						const text = body.text.endsWith("\n")
+							? body.text
+							: `${body.text}\n`;
+						await writeFile(abs, text, "utf8");
+						logger.info(`[files-api] wrote ${rel}`);
+						json(res, 200, { path: rel });
+						return;
+					}
+
 					const url = new URL(req.url ?? "/", "http://localhost");
 					const rel = url.searchParams.get("path");
 

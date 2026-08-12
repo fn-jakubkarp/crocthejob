@@ -12,12 +12,16 @@ export function json(res: ServerResponse, code: number, body: unknown): void {
 	res.end(payload);
 }
 
-export async function readBody(req: Connect.IncomingMessage): Promise<unknown> {
+export async function readBody(
+	req: Connect.IncomingMessage,
+	// An import is a whole jobs file rather than one entry, so that route raises it.
+	limit = BODY_LIMIT,
+): Promise<unknown> {
 	const chunks: Buffer[] = [];
 	let size = 0;
 	for await (const chunk of req) {
 		size += chunk.length;
-		if (size > BODY_LIMIT) throw new Error("request body too large");
+		if (size > limit) throw new Error("request body too large");
 		chunks.push(chunk as Buffer);
 	}
 	if (chunks.length === 0) return undefined;

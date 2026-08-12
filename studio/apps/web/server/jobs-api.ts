@@ -1,6 +1,7 @@
 import type { Plugin, ViteDevServer } from "vite";
 import { json } from "./http.ts";
 import { createJob } from "./routes/create.ts";
+import { importJobs } from "./routes/import.ts";
 import { listJobs } from "./routes/list.ts";
 import { patchJobs } from "./routes/patch.ts";
 import { savePostingRoute } from "./routes/posting.ts";
@@ -11,6 +12,7 @@ import { removeJob } from "./routes/remove.ts";
  * the only thing to start. One endpoint, /api/jobs: GET reads the file, PATCH edits
  * one entry or a batch, POST adds one by hand, DELETE drops one that was added by hand.
  * POST /api/jobs/posting saves a JD typed in by hand, for an entry /scrape never kept one for.
+ * POST /api/jobs/import folds in a jobs file exported somewhere else.
  *
  * Only the HTTP shape lives here. What an entry is, what a request may say and what a
  * change does to the file all belong to `@jobsearch/jobs-data`, which the PDF app will
@@ -46,6 +48,10 @@ export function jobsApi(): Plugin {
 					}
 					if (url === "/posting" && req.method === "POST") {
 						await savePostingRoute(req, res, logger);
+						return;
+					}
+					if (url === "/import" && req.method === "POST") {
+						await importJobs(req, res, logger);
 						return;
 					}
 					next();

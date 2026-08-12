@@ -312,6 +312,29 @@
     letter-spacing: 0.055em;
 }
 
+/* An answer landing in the setup sheet's spine: it arrives at full ink and settles
+   back to the muted colour the element already carries, so a value changing four
+   sections away is caught in the corner of the eye. The `to` is the computed style,
+   which is what lets one keyframe serve every readout. */
+@keyframes print-in {
+    from {
+        opacity: 0;
+        transform: translateY(3px);
+        color: var(--foreground);
+    }
+}
+
+@utility print-in {
+    animation: print-in 420ms var(--ease-out);
+}
+
+/* Colour rather than travel, so the reading still lands - shortened, not removed. */
+@media (prefers-reduced-motion: reduce) {
+    .print-in {
+        animation-duration: 200ms;
+    }
+}
+
 /* A separator: one hairline, the same weight as every other edge on the page. */
 @utility rule {
     height: 1px;

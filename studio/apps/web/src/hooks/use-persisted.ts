@@ -5,6 +5,8 @@ export const LS = {
 	visible: "kanban.visibleColumns",
 	sorts: "kanban.columnSorts",
 	dupes: "kanban.showDuplicates",
+	fit: "kanban.fitFilter",
+	setup: "kanban.setup",
 } as const;
 
 function load<T>(key: string, fallback: T, revive?: (raw: T) => T): T {

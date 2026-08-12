@@ -2,6 +2,7 @@ import { ThemeProvider } from "next-themes";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import { SetupProvider } from "@/components/setup/provider";
 import App from "./App.tsx";
 
 // The pre-paint `.dark` class is set in index.html.
@@ -16,7 +17,10 @@ createRoot(root).render(
 			enableSystem
 			disableTransitionOnChange
 		>
-			<App />
+			{/* Inside the theme provider: the wizard sets the plate through it. */}
+			<SetupProvider>
+				<App />
+			</SetupProvider>
 		</ThemeProvider>
 	</StrictMode>,
 );
