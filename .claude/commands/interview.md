@@ -10,9 +10,11 @@ Follow these steps **in order**.
 
 ## Step 0: Parse Input
 
-`$ARGUMENTS` may contain a company name (optionally with a role), e.g. `/interview acme`.
+`$ARGUMENTS` may contain a company name (optionally with a role), e.g. `/interview acme`, or `#<id>`, e.g. `/interview #153`.
 
-- **With an argument:** match against `data/jobs.json` entries (case-insensitive on `company`, then `title`). One match → proceed. Several → list and ask. None → this application isn't tracked; suggest `/outcome <company>` to register it first, or accept the posting and role details directly if the user wants to prep anyway.
+- **With `#<id>`:** read `data/jobs.json` and take the entry whose `id` is that integer. No match → say so and stop. This is the unambiguous form, and the one the board sends: a company name matches two entries whenever the same employer ran two roles.
+- **With `--stage <status>`:** the stage is settled and Step 1 does not ask for it. The board sends the column the card sits in, so the values are the pipeline's own: `screening`, `tech_interview`, `final_round`, `offer`. Anything else, or nothing, and Step 1 asks as usual.
+- **With a company name:** match against `data/jobs.json` entries (case-insensitive on `company`, then `title`). One match → proceed. Several → list and ask. None → this application isn't tracked; suggest `/outcome <company>` to register it first, or accept the posting and role details directly if the user wants to prep anyway.
 - **Without an argument:** list entries whose status suggests a live process (`screening`, `tech_interview`, `offer`, or a recent `applied`) and ask which one. If none are open, ask for the company, role, and posting.
 
 v1 preps for a **specific application**. Generic no-target practice is out of scope - if asked, prep against a real tracked application instead.
@@ -25,8 +27,8 @@ v1 preps for a **specific application**. Generic no-target practice is out of sc
    - `job_posting.md` - the exact posting the user applied to
    - `cv_<company>.md` / `cv_submitted.md` and `cover_<company>.md` - what was actually submitted. **These are what the interviewer read**; every talking point must be consistent with their claims.
    - `outcome.md` - the stage reached so far and any recorded feedback from earlier stages. Feedback from stage N is the highest-value input for stage N+1 prep.
-2. **Fallbacks** (the application may predate `/outcome`): posting via WebFetch on the tracker row's `source` URL, or ask the user to paste it; the CV via `documents/applications/<Company>_*/`. State plainly which context is missing rather than guessing - and suggest `/outcome <company>` to build the archive for next time.
-3. **Ask the user what this interview is** (skip anything `outcome.md` already records): stage (phone screen / technical / case / final round), date, format (phone, video, onsite), and who is interviewing (names and titles, if known).
+2. **Fallbacks** (the application may predate `/outcome`): posting via WebFetch on the tracker row's `source` URL, or ask the user to paste it; the CV via `documents/applications/<company>_*/`. State plainly which context is missing rather than guessing - and suggest `/outcome <company>` to build the archive for next time.
+3. **Ask the user what this interview is** (skip anything `outcome.md` or a Step 0 `--stage` already records): stage (phone screen / technical / case / final round), date, format (phone, video, onsite), and who is interviewing (names and titles, if known).
 4. **Read the frameworks once** - do not re-read them in later steps:
    - `.claude/skills/job-application-assistant/06-interview-prep.md`
    - `.claude/skills/job-application-assistant/01-candidate-profile.md`
@@ -76,7 +78,7 @@ Pick 4-6 from `07`'s categories, customized to the research and the stage: role 
 ### 6. Logistics
 The phone/video tips from `07` when the format calls for them, plus date and interviewer names as a header.
 
-Save the pack to `documents/applications/<company>_<role>/interview_prep_<stage>.md` (create the folder if this application predates `/outcome`). The folder is gitignored, so the pack stays personal; one file per stage, so earlier packs remain as history. Present the pack in chat as well - the file is the artifact, the conversation is the delivery.
+Save the pack to `documents/applications/<company>_<role>/interview_prep_<stage>.md` (create the folder if this application predates `/outcome`). The folder is tracked, not gitignored, so the pack is personal data in the repo's history and the repo stays private, as `CLAUDE.md` requires; one file per stage, so earlier packs remain as history. Present the pack in chat as well - the file is the artifact, the conversation is the delivery.
 
 ---
 

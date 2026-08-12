@@ -18,17 +18,18 @@ Follow these steps **in order**.
 `$ARGUMENTS` may contain:
 
 - Nothing → list open applications and ask which one to update
+- `#<id>`, e.g. `/outcome #153` → target that entry. The unambiguous form, and the one the board sends: a company name matches two entries whenever the same employer ran two roles. No entry with that id → say so and stop
 - A company name (optionally with a role), e.g. `/outcome acme` or `/outcome acme ml engineer` → target that application
 - `followup` → enter the follow-up branch (Step 2b) over every quiet open application, using the default threshold of **10 days**
 - `followup <N>`, e.g. `/outcome followup 14` → follow-up branch with an N-day threshold
-- `followup <company>`, e.g. `/outcome followup acme` → draft a follow-up for that application now, regardless of threshold
+- `followup <company>` or `followup #<id>`, e.g. `/outcome followup acme` → draft a follow-up for that application now, regardless of threshold
 
 ---
 
 ## Step 1: Load State and Identify the Application
 
 1. Read `data/jobs.json`. Applications are the entries whose `status` is `applied`, `screening`, `tech_interview`, `offer` or `rejected`.
-2. **With an argument:** match entries case-insensitively on `company` (and `title`, if given). One match → proceed. Several → list them and ask. None → the application was made outside the workflow; collect company, role, date applied, channel, and posting URL from the user and add an entry keyed `manual:<company-slug>:<role-slug>` with `portal: "manual (user)"`, the same shape the board's **Add posting** dialog writes.
+2. **With `#<id>`:** take the entry whose `id` is that integer, no matching needed. **With a name argument:** match entries case-insensitively on `company` (and `title`, if given). One match → proceed. Several → list them and ask. None → the application was made outside the workflow; collect company, role, date applied, channel, and posting URL from the user and add an entry keyed `manual:<company-slug>:<role-slug>` with `portal: "manual (user)"`, the same shape the board's **Add posting** dialog writes.
 3. **Without an argument:** list all entries whose status is open (`applied`, `screening`, `tech_interview`, `offer` - not `rejected`) as a numbered table (company, role, date applied, current status, days quiet, follow-ups sent) and ask which to update. The two derived columns come straight from existing data: **days quiet** counts from the entry's `applied_date`, `status_date` or the latest dated entry in `notes`, whichever is more recent; **follow-ups sent** counts the `followed up YYYY-MM-DD` markers in `notes`. If any open entry is 10+ days quiet with fewer than two follow-ups sent, add one line under the table: "Some of these have gone quiet - want a follow-up draft? (Step 2b)". If every entry is resolved, say so and stop.
 4. Derive the archive folder name: `documents/applications/<company>_<role>/` - lowercase, underscores for spaces (the convention documented in `documents/README.md`). Check whether the folder and an `outcome.md` already exist - if so, you are updating, not creating.
 
@@ -75,7 +76,7 @@ Enter this branch from the `followup` argument (Step 0) or from the offer under 
 **Logging.** Once the user confirms they will send it (or have sent it), log it in the same turn - an unlogged follow-up breaks the next run's quiet-days math:
 
 - Append `followed up YYYY-MM-DD` to the entry's `notes` (Step 4's rule applies: append a dated note, never restructure the file).
-- Save the final note as `followup_YYYY-MM-DD.md` in the application's archive folder. Safe by documented convention: `/setup` reads only the four named archive files and ignores extras (the same rule that covers `/interview`'s prep files), and `documents/applications/**` is gitignored personal data.
+- Save the final note as `followup_YYYY-MM-DD.md` in the application's archive folder. Safe by documented convention: `/setup` reads only the four named archive files and ignores extras (the same rule that covers `/interview`'s prep files).
 
 If the user decides not to send, log nothing.
 
@@ -85,9 +86,9 @@ If the user decides not to send, log nothing.
 
 ## Step 3: Archive the Application Materials
 
-Create or update `documents/applications/<company>_<role>/`. All content here is personal data - the folder is already gitignored (`documents/applications/**`), so nothing needs redacting.
+Create or update `documents/applications/<company>_<role>/`. All content here is personal data, and the folder is tracked, so it enters the repo's history: nothing is redacted, and the repo stays private, as `CLAUDE.md` requires.
 
-1. **The submitted CV markdown** - copy (never move) the submitted file. Look in `documents/applications/<Company>_*/`. Rename the CV to `cv_submitted.md` in the archive so it is unambiguous which version was sent. If a file already exists in the archive, leave it - the archived version is what was actually submitted. If no draft files exist (application made outside `/apply`), skip with a note.
+1. **The submitted CV markdown** - copy (never move) the submitted file. Look in `documents/applications/<company>_*/`. Rename the CV to `cv_submitted.md` in the archive so it is unambiguous which version was sent. If a file already exists in the archive, leave it - the archived version is what was actually submitted. If no draft files exist (application made outside `/apply`), skip with a note.
 2. **`job_posting.md`** - if it already exists, leave it. Otherwise try WebFetch on the entry's `url` and save the posting text. If the URL is dead (postings expire fast - this is exactly why the archive matters), ask the user to paste the posting, or write a stub noting the posting is unavailable. **Never reconstruct a posting from memory.**
 3. **`outcome.md`** - write or update it in exactly the format documented in `documents/README.md`, so `/setup` Path A parses it without special cases:
 
@@ -119,6 +120,8 @@ Update rules: tick stage checkboxes as they are reached (add the date in parenth
 ## Step 4: Update the Entry
 
 Set the matched entry's `status` (`applied` → `screening` → `tech_interview` → `offer` → `rejected`), stamp `status_date` with today's date, and append a short dated note to `notes`. Never restructure the file, reorder entries, or touch other entries.
+
+Set `application_dir` to the archive folder Step 3 created or updated (repo-relative, no trailing slash), unless the entry already carries it. `/apply` writes the same field when it creates the folder; this is the branch for applications made outside that workflow. It is what lets the board show the CV, the prep packs and the outcome on the entry without guessing at a folder name.
 
 **`rejected` is every way an application ends without an offer**, and *which* way is the `outcome` array, not a separate status: `ghosted`, `withdrawn`, `on_hold`, `failed_screening`, `failed_tech`, `failed_behavioural`. They combine - one that went quiet *after* the technical round is `["ghosted", "failed_tech"]`. **An empty or absent `outcome` means they simply said no**, which is a real answer and has no tag of its own.
 

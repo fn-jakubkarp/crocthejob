@@ -22,8 +22,8 @@ export type ShortcutId =
 	| "board"
 	| "stats"
 	| "history"
-	| "chat"
-	| "docs";
+	| "docs"
+	| "back";
 
 /** Where a shortcut is printed in the panel, and the order the groups appear in. */
 export type Group = "Board" | "Go to" | "Anywhere";
@@ -60,8 +60,13 @@ export const SHORTCUTS: Shortcut[] = [
 	{ id: "board", combos: ["1"], label: "Board", group: "Go to" },
 	{ id: "stats", combos: ["2"], label: "Stats", group: "Go to" },
 	{ id: "history", combos: ["3"], label: "History", group: "Go to" },
-	{ id: "chat", combos: ["4"], label: "Chat", group: "Go to" },
-	{ id: "docs", combos: ["5"], label: "Docs", group: "Go to" },
+	{ id: "docs", combos: ["4"], label: "Docs", group: "Go to" },
+	{
+		id: "back",
+		combos: ["Escape"],
+		label: "Back to the board",
+		group: "Go to",
+	},
 	{
 		id: "help",
 		combos: ["?"],

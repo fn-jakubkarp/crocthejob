@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
+	columnOf,
 	type Job,
 	OUTCOME_GROUPS,
 	OUTCOMES_BY_GROUP,
@@ -18,6 +19,7 @@ import {
 	outcomeIds,
 	outcomeTags,
 } from "@/lib/jobs";
+import { run, STATUS_HUE } from "@/lib/strip";
 
 type Props = {
 	open: boolean;
@@ -73,7 +75,18 @@ export function RejectDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-md" initialFocus={() => area.current}>
+			{/* The move it is asking about, along the bottom edge: the stage the entry is
+			    standing in running into the ending's red. Same stroke as the toast that
+			    confirms it. A batch drops the first hue - the selection did not all come
+			    from one column. */}
+			<DialogContent
+				className="hue-run sm:max-w-md"
+				style={run(
+					"closed",
+					!batch && job ? STATUS_HUE[columnOf(job)] : undefined,
+				)}
+				initialFocus={() => area.current}
+			>
 				<DialogHeader>
 					<DialogTitle>
 						{batch ? `Reject ${count} postings` : "How did it end?"}

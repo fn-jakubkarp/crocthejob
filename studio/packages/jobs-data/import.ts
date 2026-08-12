@@ -33,7 +33,9 @@ function keyOf(entry: JobEntry): string | null {
  * map, or an array of postings. Returns a message rather than throwing, so the route can
  * answer with something a person can act on.
  */
-export function readImport(payload: unknown): Record<string, JobEntry> | string {
+export function readImport(
+	payload: unknown,
+): Record<string, JobEntry> | string {
 	const wrapped = isEntry(payload) && isEntry((payload as JobsFile).seen);
 	const source = wrapped ? (payload as JobsFile).seen : payload;
 

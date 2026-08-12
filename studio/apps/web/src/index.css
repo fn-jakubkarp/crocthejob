@@ -27,7 +27,16 @@
    Anything at rest gets a plane and a hairline, never a shadow.
 
    Every neutral runs on one hue (264) at chroma 0.002–0.008, so the whole
-   surface reads as one material without a single gradient. */
+   surface reads as one material. No neutral is ever a gradient.
+
+   The one gradient in the build belongs to the timeline's hues, and it is
+   notation rather than decoration: ONE HUE IS A STATE, TWO HUES IS A PASSAGE.
+   It appears only where the object *is* a move or a run - the log spine, the
+   card that just landed, the strip across the column headers, the dialog that
+   asks about a move, the toast that reports it - and never as a fill. A
+   standing reading keeps its one flat hue: the stage rail was tried as a ramp
+   and read as a spectrum, which is the colour system spent on decoration.
+   See `hue-run` and `log-spine` below. */
 
 @theme {
     /* Redefining the theme keys rather than adding new ones means every existing
@@ -353,12 +362,130 @@
     background: var(--lamp, var(--lamp-low));
 }
 
+/* The stage rail's segment: a chevron, notched on the left and pointed on the
+   right, so the pipeline reads as a direction before a word of it is read.
+
+   Drawn twice per segment because a clip-path takes the border off with the
+   corners: the outer element is the hairline and the inner one, inset a pixel,
+   is the fill. The head keeps a flat left edge and the tail a flat right one, so
+   the run has a start and a stop rather than pointing off the plate at both ends. */
+@utility chevron {
+    clip-path: polygon(
+        0 0,
+        calc(100% - 0.5rem) 0,
+        100% 50%,
+        calc(100% - 0.5rem) 100%,
+        0 100%,
+        0.5rem 50%
+    );
+}
+
+/* The edges of the stage run, faded on whichever side still has run behind it.
+   `rail.tsx` writes the side from the scroll position, so a fade never appears on an
+   edge with nothing past it. A scrollbar is no answer here: the run is 44px tall and a
+   platform bar across it would sit on the dates. */
+[data-slides="end"] {
+    mask-image: linear-gradient(
+        to right,
+        black calc(100% - 1.75rem),
+        transparent
+    );
+}
+
+[data-slides="start"] {
+    mask-image: linear-gradient(to right, transparent, black 1.75rem);
+}
+
+[data-slides="both"] {
+    mask-image: linear-gradient(
+        to right,
+        transparent,
+        black 1.75rem,
+        black calc(100% - 1.75rem),
+        transparent
+    );
+}
+
+@utility chevron-head {
+    clip-path: polygon(
+        0 0,
+        calc(100% - 0.5rem) 0,
+        100% 50%,
+        calc(100% - 0.5rem) 100%,
+        0 100%
+    );
+}
+
+@utility chevron-tail {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0.5rem 50%);
+}
+
 /* A chip in one of the timeline's eight hues: a tint of its own colour with the
    colour as its ink, rather than a saturated slab. `--evt` is set per row. */
 @utility hue-chip {
     background: color-mix(in oklab, var(--evt) 15%, transparent);
     color: var(--evt);
     box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--evt) 28%, transparent);
+}
+
+/* A passage as an edge stroke: the hue it came from into the hue it is, left to
+   right, because that is the direction a move reads in.
+
+   LENGTH IS THE POINT. Two colours down three pixels of a left-hand bar are a
+   smudge, and around a perimeter they are the same length spent on four turns.
+   This only ever goes on a long edge, and it is a single stroke.
+
+   A background layer rather than a border: it needs nothing of the element's box
+   model, so nothing shifts by a pixel, and it is clipped by whatever radius the
+   element already has, so the stroke eases off into both corners. Left at the
+   default `background-attachment: scroll`, which is what keeps it on the visible
+   bottom edge of a scrolling dialog rather than at the foot of its content.
+
+   `--evt-from` unset is one hue and no gradient - a write that moved nothing, or a
+   batch that did not all come from one place.
+
+   `--run-weight` is the stroke, `--run-tone` how much hue and `--run-plane` what the
+   rest of it is: at the defaults the stroke is the hue itself, and the board's header
+   strip mixes down into the hairline it replaced.
+
+   The toast states these same lines itself: sonner ships its rules unlayered, so a
+   utility loses to them at any specificity. See `.toast-hue` at the bottom. */
+@utility hue-run {
+    background-image: linear-gradient(
+        to right,
+        color-mix(
+            in oklab,
+            var(--evt-from, var(--evt)) var(--run-tone, 100%),
+            var(--run-plane, transparent)
+        ),
+        color-mix(
+            in oklab,
+            var(--evt) var(--run-tone, 100%),
+            var(--run-plane, transparent)
+        )
+    );
+    background-repeat: no-repeat;
+    background-size: 100% var(--run-weight, 2px);
+    background-position: bottom center;
+}
+
+/* The log's spine: the stage rail's passage turned vertical. The run of line between
+   two medallions carries the hue of the event above it into the hue of the one below,
+   so the log walks the same colours as the rail over it. The list is newest-first, so
+   the gradient runs bottom to top, which is the direction time runs in it.
+
+   Mixed into the hairline rather than run at full chroma: it is a 1px line behind a
+   column of medallions, not a reading of its own. 60% is the knob. */
+@utility log-spine {
+    background-image: linear-gradient(
+        to top,
+        color-mix(
+            in oklab,
+            var(--evt-from, var(--evt)) 60%,
+            var(--border-strong)
+        ),
+        color-mix(in oklab, var(--evt) 60%, var(--border-strong))
+    );
 }
 
 /* A slug seated in a groove — the stats page's meters. Scaled rather than sized,
@@ -540,11 +667,25 @@ body[data-dragging] [data-dropzone] [data-dragging="true"]:hover {
 /* …and the card that landed, marked `data-arrived` by drag-state.ts. The rule
    using this sits immediately after `card-in` below, and has to: the two
    selectors are both (0,2,0), so whichever is declared later wins. Above
-   `card-in`, this animation never plays. */
+   `card-in`, this animation never plays.
+
+   IT FLASHES ITS OWN MOVE, NOT THE ACCENT. The card is the object that moved, and
+   the toast reporting the same write already says so in the timeline's hues. So
+   the flash is the stage it landed in - inherited from the column, which carries
+   `--evt` - and a stroke along the bottom edge drawing from the hue it left into
+   the hue it arrived at, in the direction the move reads. `--evt-from` is the one
+   thing drag-state has to write, and a drop back into the column it came from
+   leaves both ends equal, which is one colour and no gradient. */
 @keyframes tile-arrive {
     from {
-        border-color: var(--signal);
-        background-color: color-mix(in oklab, var(--signal) 16%, var(--card));
+        border-color: var(--evt);
+        background-color: color-mix(in oklab, var(--evt) 16%, var(--card));
+    }
+}
+
+@keyframes arrive-stroke {
+    from {
+        background-size: 0 2px;
     }
 }
 
@@ -586,9 +727,24 @@ body[data-dragging] [data-dropzone] [data-dragging="true"]:hover {
 }
 
 /* Overrides the entrance above it by equal specificity declared second — see the
-   `tile-arrive` keyframes. Do not move this above `card-in`. */
+   `tile-arrive` keyframes. Do not move this above `card-in`.
+
+   The stroke is stated here rather than as `hue-run` on the element: the class
+   would paint every card at rest, and this look belongs to the 460ms the attribute
+   is set for. It leaves when drag-state drops the attribute, so there is no
+   fade-out to author. */
 [data-dropzone] > [data-arrived] {
-    animation: tile-arrive 400ms var(--ease-out);
+    animation:
+        tile-arrive 400ms var(--ease-out),
+        arrive-stroke 460ms var(--ease-out);
+    background-image: linear-gradient(
+        to right,
+        var(--evt-from, var(--evt)),
+        var(--evt)
+    );
+    background-repeat: no-repeat;
+    background-size: 100% 2px;
+    background-position: bottom center;
 }
 
 /* Reduced motion: keep the fades, drop the travel. */
@@ -596,6 +752,14 @@ body[data-dragging] [data-dropzone] [data-dragging="true"]:hover {
     @keyframes card-in {
         from {
             opacity: 0;
+        }
+    }
+
+    /* The stroke stays, the draw goes: redefined rather than switched off, the same
+       way `card-in` keeps its fade and drops its travel. */
+    @keyframes arrive-stroke {
+        from {
+            background-size: 100% 2px;
         }
     }
 
@@ -856,26 +1020,49 @@ body[data-dragging] [data-dropzone] [data-dragging="true"]:hover {
     }
 }
 
+/* ── The toast, in the build's own material ──────────────────────────────────
+   Claimed here rather than as a class on the component. Sonner ships its rules
+   unlayered, and `elev-float` is a Tailwind `@utility`, which lives in
+   `@layer utilities` and loses to an unlayered rule however specific it is. So
+   the class on the component was doing nothing and the toast was wearing
+   sonner's stock grey drop shadow. It is a detached object and takes the same
+   elevation as the popover, the dialog and the dock. */
+[data-sonner-toast][data-styled="true"] {
+    box-shadow: var(--elev-float);
+}
+
 /* ── A toast in the colour of the stage it reports ───────────────────────────
    The timeline's eight hues, on the one surface that says a stage just changed
-   (see HUE in src/lib/strip.ts). A 3px bar on the leading edge, and when the
-   write moved an entry the bar runs from the colour it left to the colour it
-   landed in - the move itself, drawn. Nothing else on the toast takes colour:
-   the bar is the one carrier, and the words still say which stage it is.
+   (see HUE in src/lib/strip.ts), and when the write moved an entry the colour
+   runs from the one it left to the one it landed in. The move itself, drawn.
 
-   The bar is a background rather than a pseudo-element, so it needs nothing of
-   sonner's layout, and it stops short of both ends rather than being eaten by
-   the toast's corner radius.
+   ONE EDGE, AND THE LONG ONE. Two colours need length to be two colours: down
+   three pixels of a left-hand bar they are a smudge, and around the perimeter
+   they are the same length spent on four turns, which reads as a border that
+   cannot decide what it is. The full width of the bottom edge is the one run in
+   this object long enough to show a move between hues that sit next to each
+   other on the lane, and it is a single stroke.
+
+   Left to right, because that is the direction a move reads in.
+
+   A background layer rather than a border: it needs nothing of sonner's box
+   model, so no content shifts by a pixel, and nothing of its pseudo-elements,
+   which matters, since sonner spends both of the toast's own on stacking and
+   swipe. Clipped by the toast's radius like any background, so the stroke eases
+   off into both bottom corners instead of butting into them square.
+
+   Nothing else takes colour: the edge is the one carrier, and the words still
+   say which stage it is.
 
    Sonner's own rules are unlayered, so a Tailwind utility loses to them at any
    specificity; this out-specifies the rule it has to beat instead. */
 [data-sonner-toast][data-styled="true"].toast-hue {
     background-image: linear-gradient(
-        to bottom,
+        to right,
         var(--evt-from, var(--evt)),
         var(--evt)
     );
     background-repeat: no-repeat;
-    background-size: 3px calc(100% - 16px);
-    background-position: left center;
+    background-size: 100% 2px;
+    background-position: bottom center;
 }

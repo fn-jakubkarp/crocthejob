@@ -124,8 +124,9 @@ on its own. Anything about the job seeker belongs outside it.
 - `studio/apps/web/` - the web app. One app, several sections: the kanban board over
   `data/jobs.json` today, the CV maker alongside it later, sharing a landing and nav
 - `documents/cv/master_cv.md` - the master CV. One strong CV, tailored by subtraction
-- `documents/applications/<Company>_<Role>/` - per-application folder: posting, tailored CV,
-  interview prep
+- `documents/applications/<company>_<role>/` - per-application folder: posting, tailored CV,
+  interview prep. Lowercase, underscores for spaces; `application_dir` on the tracked entry
+  points at it
 - `documents/linkedin/Profile.md` - current LinkedIn profile text
 - `.claude/skills/` - AI skill definitions for the application workflow
 - `.agents/skills/` - job portal search CLIs
@@ -133,7 +134,7 @@ on its own. Anything about the job seeker belongs outside it.
 ## Workflow for New Job Applications
 1. User provides a job posting (URL or text)
 2. **Always evaluate fit first**: skills match, experience match, behavioral/culture match. Present this assessment to the user before proceeding.
-3. If good fit: create the targeted CV (`documents/applications/<Company>_<Role>/cv_<company>.md`)
+3. If good fit: create the targeted CV (`documents/applications/<company>_<role>/cv_<company>.md`)
 4. **Verify the document** (see Verification Checklist below)
 5. Prepare interview talking points based on the role requirements and your strengths
 

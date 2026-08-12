@@ -1,5 +1,17 @@
+import {
+	CircleX,
+	Gauge,
+	Handshake,
+	PenLine,
+	PhoneCall,
+	Plus,
+	Radar,
+	Send,
+	Terminal,
+	Users,
+} from "lucide-react";
 import type { CSSProperties } from "react";
-import { COLUMN_LABEL, type Status } from "@/lib/jobs";
+import { COLUMN_LABEL, type EventKind, type Status } from "@/lib/jobs";
 
 /**
  * The shared vocabulary of the two reading pages, the history timeline and the stats.
@@ -45,6 +57,26 @@ export const STATUS_HUE: Record<Status, Hue> = {
 export const tint = (hue: Hue, extra?: CSSProperties): CSSProperties =>
 	({ "--evt": HUE[hue], ...extra }) as CSSProperties;
 
+/**
+ * The two-ended sibling of `tint`, for the objects that are a passage rather than a
+ * state: the stage rail, the log spine, the strip across the column headers, the dialog
+ * that asks about a move, the toast that reports one. One hue is a state, two hues is a
+ * move - see `hue-run` and `stage-run` in index.css.
+ *
+ * `from` omitted is deliberate and means no gradient: a write that moved nothing, or a
+ * batch whose entries did not all come from the same column.
+ */
+export const run = (
+	to: Hue,
+	from?: Hue,
+	extra?: CSSProperties,
+): CSSProperties =>
+	({
+		"--evt": HUE[to],
+		...(from ? { "--evt-from": HUE[from] } : {}),
+		...extra,
+	}) as CSSProperties;
+
 /** One line, raised off the panel. A button when there is somewhere to go. */
 export const LINE =
 	"bg-card border border-border rounded-key grid w-full items-center gap-x-3 py-1.5 pr-3 pl-2 text-left";
@@ -61,3 +93,22 @@ export const CHIP_LABEL: Record<Status, string> = {
 	...COLUMN_LABEL,
 	tech_interview: "Interview",
 };
+
+/**
+ * The glyph and the hue for every kind of event, in one place so the search timeline and
+ * a single application's own log cannot drift apart. A hand-written log line takes the
+ * hand-added hue and a pen, because both are the owner writing rather than the machine
+ * reporting.
+ */
+export const EVENT = {
+	found: { icon: Radar, hue: "found" },
+	added: { icon: Plus, hue: "added" },
+	ranked: { icon: Gauge, hue: "ranked" },
+	applied: { icon: Send, hue: "applied" },
+	screening: { icon: PhoneCall, hue: "screening" },
+	tech_interview: { icon: Terminal, hue: "tech" },
+	final_round: { icon: Users, hue: "final_round" },
+	offer: { icon: Handshake, hue: "offer" },
+	closed: { icon: CircleX, hue: "closed" },
+	note: { icon: PenLine, hue: "added" },
+} as const satisfies Record<EventKind, { icon: unknown; hue: Hue }>;

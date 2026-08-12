@@ -26,6 +26,10 @@
       "type": "string",
       "description": "The day `status` last changed."
     },
+    "last_updated": {
+      "type": "string",
+      "description": "The day the board last wrote anything here, which a note or a corrected field counts towards and `status_date` does not."
+    },
     "applied_date": {
       "type": "string"
     },
@@ -74,6 +78,14 @@
     },
     "portal": {
       "type": "string"
+    },
+    "posting_file": {
+      "type": "string",
+      "description": "Repo-relative path to the saved posting text, under `documents/postings/`. Absent means nothing was kept for this entry."
+    },
+    "application_dir": {
+      "type": "string",
+      "description": "Repo-relative path to this entry's application folder, no trailing slash. Written by /apply, /outcome and /research, never by the board."
     },
     "notes": {
       "type": "string"

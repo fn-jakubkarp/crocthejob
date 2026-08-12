@@ -1,9 +1,9 @@
 import {
 	ChartColumn,
+	CircleQuestionMark,
 	Files,
 	History,
 	Keyboard,
-	MessageSquare,
 	SlidersHorizontal,
 	SquareKanban,
 } from "lucide-react";
@@ -13,13 +13,17 @@ import { Button } from "@/components/ui/button";
 import { useSetup } from "@/hooks/use-setup";
 import { cn } from "@/lib/utils";
 
-export type Section = "board" | "stats" | "history" | "chat" | "docs";
+/**
+ * `job` is a section without a key: it is one entry, reached from a card rather than
+ * from the rail, and a rail key that cannot be pressed until you have picked a posting
+ * would be dead four times out of five.
+ */
+export type Section = "board" | "stats" | "history" | "docs" | "job" | "setup";
 
 const KEYS = [
 	{ id: "board", label: "Board", icon: SquareKanban },
 	{ id: "stats", label: "Stats", icon: ChartColumn },
 	{ id: "history", label: "History", icon: History },
-	{ id: "chat", label: "Chat", icon: MessageSquare },
 	{ id: "docs", label: "Docs", icon: Files },
 ] as const satisfies readonly { id: Section; label: string; icon: unknown }[];
 
@@ -42,18 +46,21 @@ export function AppRail({
 	onSection,
 	onHelp,
 	onSetup,
+	onSchema,
 }: {
 	section: Section;
 	onSection: (section: Section) => void;
 	/** Opens the shortcut panel. Bottom of the rail, clear of the section keys. */
 	onHelp: () => void;
-	/** Opens the setup wizard, which is also where every setting lives. */
+	/** Goes to the setup page, which is also where every setting lives. */
 	onSetup: () => void;
+	/** Opens the entry schema: what a record in data/jobs.json may hold. */
+	onSchema: () => void;
 }) {
 	const { setup } = useSetup();
-	// Chat is the local Claude Code and nothing else, so an offline board has no use
-	// for the key at all.
-	const keys = KEYS.filter((key) => key.id !== "chat" || setup.ai);
+	// A job page is a drill-down from the board, so the board key stays lit under it.
+	// Nothing else in the rail can be the current section while one entry is open.
+	const lit: Section = section === "job" ? "board" : section;
 
 	return (
 		<nav
@@ -79,8 +86,8 @@ export function AppRail({
 				</DockLabel>
 			</div>
 
-			{keys.map(({ id, label, icon: Icon }) => {
-				const current = section === id;
+			{KEYS.map(({ id, label, icon: Icon }) => {
+				const current = lit === id;
 				return (
 					<Button
 						key={id}
@@ -107,20 +114,26 @@ export function AppRail({
 			})}
 
 			{/* `mt-auto` and no rule: the gap to the section keys is the separation, and a
-			    hairline across a two-glyph-wide gutter reads as a broken edge. Neither of
-			    these is a section, so no `aria-current` and no filled state - they open a
-			    panel and hand focus straight back. */}
+			    hairline across a two-glyph-wide gutter reads as a broken edge. It sits
+			    apart from the four above because it is where the board is configured
+			    rather than another view of the postings - but it is a section like them
+			    now, not a panel, so it takes the same lit state and `aria-current`. */}
 			<Button
 				variant="ghost"
-				className="text-muted-foreground relative mt-auto justify-start gap-0 px-2.5 hover:bg-card hover:text-foreground"
+				className={cn(
+					"text-muted-foreground relative mt-auto justify-start gap-0 px-2.5 hover:bg-card hover:text-foreground",
+					section === "setup" &&
+						"bg-card text-foreground border-border hover:bg-card hover:border-border",
+				)}
 				size="sm"
+				aria-current={section === "setup" ? "page" : undefined}
 				aria-label={setup.done ? "Setup" : "Finish setup"}
 				onClick={onSetup}
 			>
 				<SlidersHorizontal />
 				{/* The one lit thing in the rail, and only while the run is unfinished:
-				    a wizard walked out of halfway needs somewhere visible to come back to,
-				    and a dot is the smallest thing that says so from a shut gutter. */}
+				    a first run walked out of halfway needs somewhere visible to come back
+				    to, and a dot is the smallest thing that says so from a shut gutter. */}
 				{!setup.done && (
 					<span
 						aria-hidden
@@ -128,6 +141,21 @@ export function AppRail({
 					/>
 				)}
 				<DockLabel>{setup.done ? "Setup" : "Finish setup"}</DockLabel>
+			</Button>
+
+			{/* The file's own shape, not the app's help: the board is a view onto
+			    data/jobs.json and shows a chosen few of its fields, so the rest of the
+			    record needs somewhere to be looked up. Above Shortcuts, since the two
+			    answer different questions and this is the one about the data. */}
+			<Button
+				variant="ghost"
+				className="text-muted-foreground justify-start gap-0 px-2.5 hover:bg-card hover:text-foreground"
+				size="sm"
+				aria-label="Entry schema"
+				onClick={onSchema}
+			>
+				<CircleQuestionMark />
+				<DockLabel>Schema</DockLabel>
 			</Button>
 
 			<Button

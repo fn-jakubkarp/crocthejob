@@ -49,7 +49,7 @@ import {
 	type SortId,
 	type Status,
 } from "@/lib/jobs";
-import { HUE, STATUS_HUE } from "@/lib/strip";
+import { HUE, run, STATUS_HUE, tint } from "@/lib/strip";
 import { cn } from "@/lib/utils";
 
 /** Columns render a slice; `skipped` alone holds 160+ entries. */
@@ -101,6 +101,8 @@ function Chip({
 
 type Props = {
 	status: Status;
+	/** The column to the right, whose hue this one's header strip ramps into. */
+	nextStatus?: Status;
 	label: string;
 	lane: Lane;
 	/** What this column says when empty. See COLUMNS in lib/jobs.ts. */
@@ -118,11 +120,10 @@ type Props = {
 	onStatus: (key: string, status: Status) => void;
 	onNotes: (key: string, notes: string) => Promise<void>;
 	onEdit: (job: Job, focus?: "url") => void;
-	onReadPosting: (path: string) => void;
+	/** Leaves the board for that entry's own page. */
+	onOpenJob: (id: number) => void;
 	onDismiss: (key: string, reason: string) => void;
 	onDelete: (key: string) => void;
-	/** A JD typed in by hand. Rethrows, so the dialog can stay open. */
-	onSavePosting: (key: string, text: string) => Promise<void>;
 	/** Keys held across the whole board, not just this column. */
 	selected: Set<string>;
 	onSelect: (key: string, mode: "toggle" | "range") => void;
@@ -136,6 +137,7 @@ type Props = {
 
 export function BoardColumn({
 	status,
+	nextStatus,
 	label,
 	lane,
 	empty,
@@ -150,10 +152,9 @@ export function BoardColumn({
 	onStatus,
 	onNotes,
 	onEdit,
-	onReadPosting,
+	onOpenJob,
 	onDismiss,
 	onDelete,
-	onSavePosting,
 	selected,
 	onSelect,
 	onBatchStatus,
@@ -239,16 +240,43 @@ export function BoardColumn({
 		// user here. See App's `focus` effect.
 		<div
 			id={`column-${status}`}
+			// `data-column` is how drag-state finds the hue of the column a card was
+			// dragged out of, without a computed-style read and without React knowing a
+			// drag happened. The stage's colour is set here rather than on the lamp so
+			// the header strip, the lamp and every card in the track share one value.
+			data-column
+			style={tint(STATUS_HUE[status])}
 			// Every track carries its right rule, the last one included: the sheet
 			// needs a line to end on or the board just stops.
 			className="flex w-[17rem] shrink-0 flex-col border-r border-border"
 		>
 			{/* The index bar. Outside the scroll container, so it holds its place down
 			    a 160-entry column, and on the surface plane so the row of them reads
-			    across the whole board as one ruled strip. */}
-			{/* `pt-px` offsets the bottom border: h-11 is the outer height, so without it
-			    the centred row sits half a pixel above the middle of the bar. */}
-			<div className="bg-surface flex h-11 shrink-0 items-center gap-2 border-b border-border px-3 pt-px">
+			    across the whole board as one ruled strip.
+
+			    THE STRIP IS THE PIPELINE. That rule is no longer neutral: it runs from
+			    this column's hue into the next visible one's, and since the headers sit
+			    flush the row of them is one continuous ramp across the whole sheet - the
+			    board's only colour beyond seven lamps, and the one edge on the page long
+			    enough to carry a move between two hues. The last column ramps into
+			    itself, which ends the run flat rather than pointing it off the plate.
+
+			    `--evt-from`/`--evt` are set here rather than inherited: the wrapper's
+			    `--evt` is this column's own hue and every card in the track reads it. The
+			    lamp below carries its own `--lamp`, so it is unaffected either way.
+
+			    A background rather than a border, so `h-11` still measures the same box -
+			    hence no `pt-px`, which existed only to offset a border out of it.
+
+			    Two pixels and near-full chroma, which is the one place in this build an
+			    edge is not a hairline. At 1px mixed halfway into the border it was the
+			    neutral rule it replaced: a gradient nobody can see is not a gradient, and
+			    this is the run that has to carry the whole board. `--run-tone` and
+			    `--run-weight` are the knobs. */}
+			<div
+				className="bg-surface hue-run flex h-11 shrink-0 items-center gap-2 px-3 [--run-plane:var(--surface)] [--run-tone:85%] [--run-weight:2px]"
+				style={run(STATUS_HUE[nextStatus ?? status], STATUS_HUE[status])}
+			>
 				{/* The stage's own colour, the same one it carries on the timeline and in
 				    the stats - so the row of lamps across the board reads as the pipeline
 				    rather than as four generic states. Never the only carrier: the label
@@ -452,10 +480,9 @@ export function BoardColumn({
 						onStatus={onStatus}
 						onNotes={onNotes}
 						onEdit={onEdit}
-						onReadPosting={onReadPosting}
+						onOpenJob={onOpenJob}
 						onDismiss={onDismiss}
 						onDelete={onDelete}
-						onSavePosting={onSavePosting}
 						selected={selected.has(job.key)}
 						selectionSize={selected.size}
 						onSelect={onSelect}

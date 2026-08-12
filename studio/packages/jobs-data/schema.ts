@@ -73,6 +73,13 @@ export type JobEntry = {
 	portal?: string;
 	/** Repo-relative path to the saved posting text. /scrape writes it. */
 	posting_file?: string;
+	/**
+	 * Repo-relative path to this entry's application folder, no trailing slash. Written
+	 * by /apply, /outcome and /research, whichever creates it first; never by the board.
+	 * What the tailored CV, the prep packs and the outcome are found through, instead of
+	 * rebuilding a folder name out of company and title and hoping the two agree.
+	 */
+	application_dir?: string;
 	notes?: string;
 	rank_score?: number;
 	rank_verdict?: string;

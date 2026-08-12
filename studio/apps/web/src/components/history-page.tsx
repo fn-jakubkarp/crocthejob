@@ -1,26 +1,14 @@
-import {
-	CircleX,
-	Gauge,
-	Ghost,
-	Handshake,
-	PhoneCall,
-	Plus,
-	Radar,
-	Send,
-	Terminal,
-	Users,
-} from "lucide-react";
+import { Ghost } from "lucide-react";
 import { useMemo } from "react";
 import { Chip, StripHead } from "@/components/strip";
 import {
 	buildHistory,
 	type DupIndex,
 	type HistoryEvent,
-	type HistoryKind,
 	type Job,
 	type Status,
 } from "@/lib/jobs";
-import { type Hue, LINE, LINE_HOVER, tint } from "@/lib/strip";
+import { EVENT, type Hue, LINE, LINE_HOVER, tint } from "@/lib/strip";
 
 /**
  * What has been happening, newest first.
@@ -52,19 +40,6 @@ type Props = {
 	/** Opens the column a line's posting sits in now. */
 	onOpen: (status: Status) => void;
 };
-
-/** The glyph and the hue for each kind. One entry, so the two can never drift apart. */
-const EVENT = {
-	found: { icon: Radar, hue: "found" },
-	added: { icon: Plus, hue: "added" },
-	ranked: { icon: Gauge, hue: "ranked" },
-	applied: { icon: Send, hue: "applied" },
-	screening: { icon: PhoneCall, hue: "screening" },
-	tech_interview: { icon: Terminal, hue: "tech" },
-	final_round: { icon: Users, hue: "final_round" },
-	offer: { icon: Handshake, hue: "offer" },
-	closed: { icon: CircleX, hue: "closed" },
-} as const satisfies Record<HistoryKind, { icon: unknown; hue: Hue }>;
 
 /**
  * ONE PLATE, ONE MOVE. The page seats as a single object: everything on it fades up and

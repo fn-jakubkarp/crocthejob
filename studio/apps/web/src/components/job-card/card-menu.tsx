@@ -7,6 +7,7 @@ import {
 	CopyPlus,
 	ExternalLink,
 	Link2,
+	Maximize2,
 	NotepadText,
 	Pencil,
 	Trash2,
@@ -20,6 +21,7 @@ import {
 	ContextMenuSubContent,
 	ContextMenuSubTrigger,
 } from "@/components/ui/context-menu";
+import { externalLink } from "@/lib/external-link";
 import {
 	COLUMNS,
 	columnOf,
@@ -39,6 +41,8 @@ type MenuProps = {
 	selectionSize: number;
 	onCopyText: (text: string, what: string) => void;
 	onOpenDetails: () => void;
+	/** Leaves the board for the entry's own page. No-ops on an entry without an id. */
+	onOpenJob: () => void;
 	onEdit: () => void;
 	onSkip: () => void;
 	/** Opens the confirm; the card owns the dialog. */
@@ -62,6 +66,7 @@ export function CardMenu({
 	selectionSize,
 	onCopyText,
 	onOpenDetails,
+	onOpenJob,
 	onEdit,
 	onSkip,
 	onDelete,
@@ -100,12 +105,7 @@ export function CardMenu({
 				</>
 			)}
 			{!batch && job.url && (
-				<ContextMenuItem
-					render={
-						<a href={job.url} target="_blank" rel="noreferrer noopener" />
-					}
-					nativeButton={false}
-				>
+				<ContextMenuItem {...externalLink(job.url)}>
 					<ExternalLink />
 					Open the posting
 				</ContextMenuItem>
@@ -124,6 +124,13 @@ export function CardMenu({
 			)}
 			{!batch && (
 				<>
+					{/* The full entry first: the description, what has been written for it,
+					    and the readings. The popover under it is the fast read. */}
+					<ContextMenuItem disabled={job.id === undefined} onClick={onOpenJob}>
+						<Maximize2 />
+						Open the full entry
+					</ContextMenuItem>
+
 					<ContextMenuItem onClick={onOpenDetails}>
 						<NotepadText />
 						Details and notes

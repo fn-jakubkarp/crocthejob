@@ -6,7 +6,6 @@ import { CardFace } from "@/components/job-card/card-face";
 import { CardMenu } from "@/components/job-card/card-menu";
 import { tileClass } from "@/components/job-card/tile";
 import { JobDetails } from "@/components/job-details";
-import { SavePostingDialog } from "@/components/save-posting-dialog";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import {
 	Popover,
@@ -36,14 +35,12 @@ type Props = {
 	onStatus: (key: string, status: Status) => void;
 	onNotes: (key: string, notes: string) => Promise<void>;
 	onEdit: (job: Job, focus?: "url") => void;
-	/** Leaves the board for the document reader, on that entry's saved posting. */
-	onReadPosting: (path: string) => void;
+	/** Leaves the board for that entry's own page, where the JD and its documents are. */
+	onOpenJob: (id: number) => void;
 	/** Status + reason in one write: Skipped, reason into `notes`. */
 	onDismiss: (key: string, reason: string) => void;
 	/** Drops the entry from the file. Offered on hand-added entries only. */
 	onDelete: (key: string) => void;
-	/** A JD typed in by hand. Rethrows, so the dialog can stay open. */
-	onSavePosting: (key: string, text: string) => Promise<void>;
 	selected: boolean;
 	selectionSize: number;
 	/** `range` = shift-click: extend from the last card toggled in this column. */
@@ -71,10 +68,9 @@ export const JobCard = memo(function JobCard({
 	onStatus,
 	onNotes,
 	onEdit,
-	onReadPosting,
+	onOpenJob,
 	onDismiss,
 	onDelete,
-	onSavePosting,
 	selected,
 	selectionSize,
 	onSelect,
@@ -88,7 +84,6 @@ export const JobCard = memo(function JobCard({
 	const [open, setOpen] = useState(false);
 	const [dismissing, setDismissing] = useState(false);
 	const [deleting, setDeleting] = useState(false);
-	const [addingPosting, setAddingPosting] = useState(false);
 	// Right-click on a selected card acts on the selection, else on that card alone.
 	const batch = selected && selectionSize > 1;
 	const score = job.rank_score;
@@ -116,18 +111,13 @@ export const JobCard = memo(function JobCard({
 		[job, onEdit],
 	);
 
-	const handleAddPosting = useCallback(() => {
+	// Guarded rather than assumed: `id` is backfilled server-side on every GET, so an
+	// entry without one has only ever been seen by a fetch that beat the backfill.
+	const handleOpenJob = useCallback(() => {
+		if (job.id === undefined) return;
 		setOpen(false);
-		setAddingPosting(true);
-	}, []);
-
-	// Guarded rather than assumed: the button is disabled without a file, and this is
-	// also reachable from the popover being open while /scrape rewrites the entry.
-	const handleReadPosting = useCallback(() => {
-		if (!job.posting_file) return;
-		setOpen(false);
-		onReadPosting(job.posting_file);
-	}, [job.posting_file, onReadPosting]);
+		onOpenJob(job.id);
+	}, [job.id, onOpenJob]);
 
 	const handleDismiss = useCallback(
 		(reason: string) => onDismiss(job.key, reason),
@@ -217,6 +207,7 @@ export const JobCard = memo(function JobCard({
 					selectionSize={selectionSize}
 					onCopyText={copyText}
 					onOpenDetails={() => setOpen(true)}
+					onOpenJob={handleOpenJob}
 					onEdit={handleEdit}
 					onSkip={() => setDismissing(true)}
 					onDelete={() => setDeleting(true)}
@@ -240,8 +231,7 @@ export const JobCard = memo(function JobCard({
 					onStatus={handleStatus}
 					onNotes={handleNotes}
 					onEdit={handleEdit}
-					onReadPosting={handleReadPosting}
-					onAddPosting={handleAddPosting}
+					onOpenJob={handleOpenJob}
 					onUnlinkDuplicate={onUnlinkDuplicate}
 					onOutcome={handleOutcome}
 					onClearOutcome={handleClearOutcome}
@@ -254,13 +244,6 @@ export const JobCard = memo(function JobCard({
 				open={dismissing}
 				onOpenChange={setDismissing}
 				onConfirm={handleDismiss}
-			/>
-
-			<SavePostingDialog
-				job={job}
-				open={addingPosting}
-				onOpenChange={setAddingPosting}
-				onConfirm={onSavePosting}
 			/>
 
 			{/* Not gated on `deleting`: base-ui portals nothing while closed, and

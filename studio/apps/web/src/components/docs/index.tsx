@@ -1,12 +1,13 @@
 import { formatDistanceToNow } from "date-fns";
 import { Copy } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import ReactMarkdown, { type Components } from "react-markdown";
+import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { Outline } from "@/components/docs/outline";
 import { Button } from "@/components/ui/button";
 import { useOutline } from "@/hooks/use-outline";
+import { DOC_COMPONENTS } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
 
 type Entry = {
@@ -35,30 +36,6 @@ const label = (dir: string) => {
 };
 
 const filename = (file: string) => file.slice(file.lastIndexOf("/") + 1);
-
-/**
- * Only the pieces the surrounding CSS cannot reach. Everything visual is in the `.doc`
- * block in index.css, so the map stays at what needs a different element: a table that
- * has to be able to scroll without taking the page sideways with it, and links that
- * leave the app.
- */
-const COMPONENTS: Components = {
-	table: ({ children, ...props }) => (
-		<div className="doc-table">
-			<table {...props}>{children}</table>
-		</div>
-	),
-	a: ({ children, href, ...props }) => (
-		<a
-			href={href}
-			target={href?.startsWith("http") ? "_blank" : undefined}
-			rel={href?.startsWith("http") ? "noreferrer" : undefined}
-			{...props}
-		>
-			{children}
-		</a>
-	),
-};
 
 /**
  * The documents, read in the app.
@@ -310,7 +287,7 @@ export function DocsPage({ path }: { path?: string | null }) {
 								<div ref={docRef} className="doc">
 									<ReactMarkdown
 										remarkPlugins={[remarkGfm]}
-										components={COMPONENTS}
+										components={DOC_COMPONENTS}
 									>
 										{body}
 									</ReactMarkdown>

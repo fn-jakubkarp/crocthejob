@@ -35,7 +35,7 @@ When the user provides a job posting (URL or text), follow this workflow:
 ### Step 2: Tailor CV
 - Read the master CV, `documents/cv/master_cv.md`, as the starting point and the fact source
 - Follow the guidelines in `05-cv-templates.md`
-- Create `documents/applications/<Company>_<Role>/cv_<company>.md` with tailored content
+- Create `documents/applications/<company>_<role>/cv_<company>.md` with tailored content
 - Adjust: profile statement, skills section, experience bullet emphasis, section order
 
 ### Step 3: Application-Form Fields (only when the posting has them)
