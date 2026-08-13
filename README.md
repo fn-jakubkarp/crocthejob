@@ -32,12 +32,11 @@
   <a href="https://github.com/fn-jakubkarp/crocthejob/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/fn-jakubkarp/crocthejob/ci.yml?branch=main&label=CI&style=flat" alt="CI status"></a>
   <img src="https://img.shields.io/github/last-commit/fn-jakubkarp/crocthejob?style=flat" alt="Last commit">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat" alt="MIT License"></a>
-  <img src="https://img.shields.io/badge/data-one_JSON_file-637aee?style=flat" alt="One JSON file">
 </p>
 
 It is a tracker for job hunting, the way Jira or Notion is a tracker for work: scrape postings, evaluate them, keep a record of what you applied to and what happened. It does not automate applying.
 
-The skills scrape the portals, score what came back against your profile, and draft a CV that only says things you can defend. The board is where you drag a card from **applied** to **screening** and the JSON updates underneath.
+The skills scrape the portals, score what came back against your profile, and draft a CV that only says things you can defend.
 
 > [!NOTE]
 > Every document it writes is assembled out of `documents/` and nothing else. It will not invent a skill you did not list or a number you did not give it. A thin profile produces a generic CV, and no amount of prompting fixes that.
@@ -115,9 +114,7 @@ JOBS_FILE=~/jobs.json bun run dev
 
 ## How it works
 
-**One file, two halves.** `data/jobs.json` is keyed by posting URL. `/scrape` appends, `/rank` scores into it, the board moves cards around it, `/outcome` closes them out. There is no database and no sync, which is why the board and the skills never disagree about what happened.
-
-**Field ownership is explicit.** Six fields belong to the board alone (`id`, `next_id`, `status_date`, `applied_date`, `duplicate_of`, `outcome`), and the skills are told to carry them through untouched. `studio/packages/jobs-data/` is the only code that opens the file, so the schema has one definition rather than four.
+**One file, two halves.** `data/jobs.json` is keyed by posting URL. `/scrape` appends, `/rank` scores into it, the board moves cards around it, `/outcome` closes them out. No database, no sync, so the board and the skills never disagree about what happened.
 
 **Statuses are a pipeline, outcomes are a description.**
 
@@ -126,9 +123,7 @@ new → ranked → applied → screening → tech_interview → final_round → 
                                                     ↘ rejected · skipped
 ```
 
-`outcome` is a combinable array, not a single value. Going quiet after the technical interview is `["ghosted", "failed_tech"]`, which three separate status columns could never have said.
-
-**Nothing is fabricated.** Three sources ground every draft: `01-candidate-profile.md`, the master CV, and the profile block in `CLAUDE.md`. A claim supported by none of them is removed before the file is written, which is also why a fact you confirm in conversation gets written back to the profile in the same turn.
+`outcome` is a combinable array: `["ghosted", "failed_tech"]` says more than any single status column could.
 
 ## Repo layout
 
