@@ -149,6 +149,21 @@ bun run dev        # http://localhost:5173
 
 Drag a card and the entry's `status` is rewritten in `data/jobs.json`. Notes typed on a card save to the same entry. Five sections: the board, stats, a history timeline, a markdown docs reader, and a page per posting whose run panel drives the same Claude Code install your terminal does.
 
+<p align="center">
+  <img src="docs/job-page.png" alt="A posting at full size: the stage rail with days between stages, the log read back as a timeline, and the documents written for this application" width="900">
+</p>
+<p align="center"><sub><strong>A page per posting</strong> · the stage rail, the score breakdown, the log as a timeline, and every document written for it</sub></p>
+
+<p align="center">
+  <img src="docs/stats.png" alt="The stats page: pipeline funnel, applications needing an answer, the ranked queue by score band, and applications sent per week" width="900">
+</p>
+<p align="center"><sub><strong>Stats</strong> · where the funnel leaks, what is overdue a chase, and what the ranking actually converted</sub></p>
+
+<p align="center">
+  <img src="docs/history.png" alt="The history timeline: scrape runs, ranking passes, applications and interview stages, one line per action, newest day first" width="900">
+</p>
+<p align="center"><sub><strong>History</strong> · reconstructed from the dates in the file, one line per action rather than per row written</sub></p>
+
 > [!WARNING]
 > It runs under `bun run dev` only. The write path is a Vite dev-server plugin, so `bun run build` produces a bundle that loads nothing and saves nothing. This is a local tool, not a deployment.
 
