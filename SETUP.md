@@ -14,6 +14,8 @@ npm install -g @anthropic-ai/claude-code
 
 You'll need an Anthropic API key or a Claude Pro/Team subscription. See the [Claude Code docs](https://docs.anthropic.com/en/docs/claude-code) for details.
 
+The portal skills also work from Codex, OpenCode and the Gemini CLI (see [`AGENTS.md`](AGENTS.md)).
+
 ### Python
 
 Python 3.10+ is required for the lint and guard scripts. Check with:
@@ -84,7 +86,35 @@ Outside Poland, generate a search skill for your local job board with `/add-port
 investigates the portal, scaffolds the same CLI structure, and test-runs a live query before
 registering anything.
 
-## 4. Run the setup interview
+### Verify the install
+
+```bash
+python3 tools/lint_skills.py                      # needs pyyaml
+python3 tools/security_guards.py
+python3 -m unittest discover -s tests -t .
+bun run ci && bun run test
+```
+
+## 4. Fill in your documents
+
+`documents/templates/` holds three starters. Copy each into place and write it. This is the step
+that decides output quality, and it is the one people skip.
+
+| Template | Goes to | What it is |
+| --- | --- | --- |
+| `master_cv.md` | `documents/cv/master_cv.md` | The one strong CV every tailored version is cut from |
+| `linkedin-profile.md` | `documents/linkedin/Profile.md` | What your profile says today, recommendations included |
+| `professional-record.md` | `documents/references/professional-record.md` | The long-form private account of what you actually did |
+
+The professional record is the one worth the evening. A CV bullet holds eight words about six
+months of work; an interview answer needs the situation, the constraint and the outcome that the
+bullet dropped. Write it messy, ask Claude to sort it out, come back to it. It gets written
+several times, not once.
+
+You can skip this step and go straight to `/setup` below; it will ask for the same information
+interactively. Filling the templates first just gives it more to work with up front.
+
+## 5. Run the setup interview
 
 Start Claude Code in the repository:
 
@@ -100,7 +130,7 @@ Then run the onboarding:
 
 Claude will offer three paths:
 
-- **Path A (documents folder):** Add your CV, LinkedIn export, diplomas, references, or past applications under `documents/`. Claude reads and cross-references them before proposing profile updates. This is best when you have several source files.
+- **Path A (documents folder):** Add your CV, LinkedIn export, diplomas, references, or past applications under `documents/` (the templates from step 4, or anything else). Claude reads and cross-references them before proposing profile updates. This is best when you have several source files.
 - **Path B (single CV import):** Share one CV/resume by mentioning the file with `@` or pasting the text. Claude extracts it and asks follow-up questions for anything missing.
 - **Path C (interview mode):** Answer structured interview questions section by section.
 
@@ -111,13 +141,13 @@ All three paths produce the same result: fully populated profile files.
 | File | Content |
 |------|---------|
 | `CLAUDE.md` | Your full candidate profile |
-| `01-candidate-profile.md` | Structured education, experience, skills |
-| `02-behavioral-profile.md` | Behavioral assessment |
-| `04-job-evaluation.md` | Personalized skill match areas and career goals |
-| `05-cv-templates.md` | Profile statement templates for your background |
-| `06-interview-prep.md` | STAR examples from your experience |
+| `.claude/skills/job-application-assistant/01-candidate-profile.md` | Structured education, experience, skills |
+| `.claude/skills/job-application-assistant/02-behavioral-profile.md` | Behavioral assessment |
+| `.claude/skills/job-application-assistant/04-job-evaluation.md` | Personalized skill match areas and career goals |
+| `.claude/skills/job-application-assistant/05-cv-templates.md` | Profile statement templates for your background |
+| `.claude/skills/job-application-assistant/06-interview-prep.md` | STAR examples from your experience |
 | `documents/cv/master_cv.md` | Your master CV in markdown |
-| `search-queries.md` | Job search queries for `/scrape` |
+| `.claude/skills/job-scraper/search-queries.md` | Job search queries for `/scrape` |
 
 ### Re-running setup
 
@@ -131,7 +161,7 @@ You can update specific sections later:
 
 The `--section search` option is especially useful as your priorities evolve. It re-runs the search configuration interview and suggests role types you may not have considered based on your full profile.
 
-## 5. Open the board
+## 6. Open the board
 
 ```bash
 bun run dev        # http://localhost:5173
@@ -143,7 +173,7 @@ empty on a fresh clone and fills as postings arrive.
 It runs under `bun run dev` only: the write path is a Vite dev-server plugin, so a built bundle
 loads nothing and saves nothing.
 
-## 6. Test the workflow
+## 7. Test the workflow
 
 Find a job posting you're interested in, then:
 
@@ -164,7 +194,7 @@ Claude will:
 4. Have a reviewer agent critique the drafts
 5. Revise and present the final output
 
-## 7. Export your document
+## 8. Export your document
 
 `/apply` writes a tailored CV in markdown to
 `documents/applications/<company>_<role>/cv_<company>.md`, plus an edit summary in chat listing

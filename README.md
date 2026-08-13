@@ -5,8 +5,7 @@
 </p>
 
 <p align="center">
-  <em>Most of a job search is paperwork you redo for every posting.</em><br>
-  <strong>Croc the Job scrapes the boards, scores postings against your profile, drafts the CV, and keeps the lot in one JSON file you own.</strong><br>
+  <strong>A job-hunt tracker: scrape postings, score them against your profile, draft the CV, and keep a record of every application.</strong><br>
   <em>Local-first. Open source.</em>
 </p>
 
@@ -23,7 +22,6 @@
 <p align="center"><strong>Scrape · Rank · Tailor · Track · Prep</strong></p>
 
 <p align="center">
-  <sub>One JSON file, read and written by both halves</sub><br>
   <img src="https://img.shields.io/badge/Claude_Code-000?style=flat&logo=anthropic&logoColor=white" alt="Claude Code">
   <img src="https://img.shields.io/badge/Bun-14151A?style=flat&logo=bun&logoColor=white" alt="Bun">
   <img src="https://img.shields.io/badge/React_19-20232A?style=flat&logo=react&logoColor=61DAFB" alt="React 19">
@@ -37,31 +35,12 @@
   <img src="https://img.shields.io/badge/data-one_JSON_file-637aee?style=flat" alt="One JSON file">
 </p>
 
-A few dozen applications in, the part that breaks is record keeping. Did I already see this one. Did they ever reply. What does the CV they are about to interview me on actually say. The skills do the writing, the board keeps the record, and both work on the same file.
+It is a tracker for job hunting, the way Jira or Notion is a tracker for work: scrape postings, evaluate them, keep a record of what you applied to and what happened. It does not automate applying.
 
 The skills scrape the portals, score what came back against your profile, and draft a CV that only says things you can defend. The board is where you drag a card from **applied** to **screening** and the JSON updates underneath.
 
 > [!NOTE]
 > Every document it writes is assembled out of `documents/` and nothing else. It will not invent a skill you did not list or a number you did not give it. A thin profile produces a generic CV, and no amount of prompting fixes that.
-
-## Features
-
-- **Deduped scraping**: `/scrape` runs every installed portal CLI and compares URLs canonically, so the same posting under `?utm_source=` and a locale prefix is one entry, not three. Postings expire; the fetched text is saved to `documents/postings/` before it does.
-- **Ranking with the reasons attached**: `/rank` batch-scores new postings on five dimensions with parallel agents, vetoes on your stated deal-breakers, and hands back a shortlist with honest per-job gaps. Location is stored as the place the posting names, never as a verdict that throws the place away.
-- **A CV you can defend in the interview**: `/apply` drafts, then a second agent with a fresh context researches the company and critiques the draft, then it revises. Every claim is audited against your profile before the file is written; gaps stay visible and are never stuffed.
-- **Tailoring by subtraction**: one master CV, kept deliberately over-length. Per application it is cut and reordered, never rewritten, so nothing drifts. When it overflows a page, lines are scored by relevance to *this* posting and the lowest goes first.
-- **The board**: nine columns over the same JSON, drag to change status, notes save to the entry. Plus a stats page, a history timeline and a docs reader.
-- **A page per posting**: every entry opens at full size, with the description, the dated log read back as a timeline, the CV and prep packs produced for it, and the skills that apply at its current stage runnable from there against your local Claude Code.
-- **Outcomes kept separate from status**: `rejected` absorbs every way an application ends, and *how* it ended is a combinable `outcome` array. Going quiet after the technical is `["ghosted", "failed_tech"]`, which three separate columns could never have said.
-- **Calibrated on your own funnel**: `/outcome` records what happened and `/setup` folds it back into the scoring framework, so the ranking calibrates on which roles actually converted for you.
-- **Portals for your own market**: three Polish portals ship, LinkedIn and freehire are market-agnostic, and `/add-portal` scaffolds a skill for any other board and test-runs it live before registering.
-
-## Prerequisites
-
-- [Claude Code](https://claude.com/claude-code): drives everything. The portal skills also work from Codex, OpenCode and the Gemini CLI (see [`AGENTS.md`](AGENTS.md)).
-- [Bun](https://bun.sh): the portal CLIs and the web app.
-- Python 3.10+: the lint and guard scripts.
-- Optional, [`pdftotext`](https://poppler.freedesktop.org/): `/apply` uses it to check your exported PDF the way an ATS reads it. Without it the check degrades to a visual review.
 
 ## Installation
 
@@ -71,33 +50,7 @@ cd crocthejob
 bun install
 ```
 
-The repo root is a bun workspace covering the web app and all five portal CLIs, so that one install
-does everything. Same command on Windows.
-
-<details>
-<summary>Verify the install</summary>
-
-```bash
-python3 tools/lint_skills.py                      # needs pyyaml
-python3 tools/security_guards.py
-python3 -m unittest discover -s tests -t .
-bun run ci && bun run test
-```
-
-</details>
-
-## First, fill in your documents
-
-`documents/templates/` holds three starters. Copy each into place and write it. This is the step that decides output quality, and it is the one people skip.
-
-| Template | Goes to | What it is |
-| --- | --- | --- |
-| `master_cv.md` | `documents/cv/master_cv.md` | The one strong CV every tailored version is cut from |
-| `linkedin-profile.md` | `documents/linkedin/Profile.md` | What your profile says today, recommendations included |
-| `professional-record.md` | `documents/references/professional-record.md` | The long-form private account of what you actually did |
-
-> [!IMPORTANT]
-> The professional record is the one worth the evening. A CV bullet holds eight words about six months of work; an interview answer needs the situation, the constraint and the outcome that the bullet dropped. Write it messy, ask Claude to sort it out, come back to it. It gets written several times, not once.
+Prerequisites, verifying the install, and filling in your documents: see [SETUP.md](SETUP.md).
 
 ## Usage
 
@@ -113,33 +66,20 @@ Open Claude Code **inside the repo** and run the skills. The loop is: profile on
 
 ### Commands
 
-**Profile**
-
 | Command | What it does |
 | --- | --- |
-| `/setup [--section <name>]` | Builds your profile from `documents/`, a pasted CV, or an interview. Re-runnable; it merges and asks before overwriting. `--section search` re-runs just the search config. |
-| `/expand` | Enriches the profile from public sources you already linked in it: repos, portfolio, course syllabi. Discovered competencies land with a source tag. |
-| `/reset [profile\|documents\|all]` | Wipes profile data or the documents folder. Shows exactly what goes and makes you type `RESET`. |
+| `/setup` | Builds your profile from `documents/`. |
+| `/expand` | Enriches the profile from sources you've linked. |
+| `/reset` | Wipes profile data or documents. |
+| `/scrape` | Searches every portal, dedupes, saves posting text. |
+| `/rank` | Scores new postings, vetoes deal-breakers, shortlists. |
+| `/add-portal` | Scaffolds a search skill for a new job board. |
+| `/apply {url\|text}` | Drafts, reviews and verifies a tailored CV. |
+| `/outcome` | Records what happened, archives the CV. |
+| `/interview {company}` | Builds a stage-specific prep pack. |
+| `/upskill` | Maps skill gaps against tracked postings. |
 
-**Find**
-
-| Command | What it does |
-| --- | --- |
-| `/scrape [focus]` | Runs every enabled portal CLI, dedupes against everything ever seen, saves posting text, presents matches sorted by fit. `/scrape health` probes the portals instead of searching. |
-| `/rank [--all]` | Batch-scores new postings against the fit framework in parallel, vetoes on deal-breakers, flags deadlines, marks dead postings expired. Pick a number and it hands off to `/apply`. |
-| `/add-portal` | Investigates a job board in your market, scaffolds a CLI skill with the same output contract as the shipped ones, and test-runs a live query before registering it. |
-
-**Apply**
-
-| Command | What it does |
-| --- | --- |
-| `/apply {url \| text}` | The drafter-reviewer workflow: evaluate fit, draft the tailored CV, spawn a reviewer with a fresh context to research the company and critique it, revise, verify against the profile, ATS-check the keywords. |
-| `/outcome [followup]` | Records interview stages, offers, rejections and silence; archives the CV and posting. `followup` surfaces applications gone quiet and drafts a short note, never sends one. |
-| `/interview {company}` | Builds a stage-specific prep pack from that application's own archive: the posting, the CV they actually read, feedback from earlier rounds. Offers a mock interview. |
-| `/upskill [url]` | The gap between your profile and your tracked postings, as a prioritized heatmap plus a learning plan with time estimates. |
-
-> [!TIP]
-> A posting URL that will not fetch is not a dead end: `/apply <the full job description>` takes pasted text, and the board's **Save posting** dialog files it where `/scrape` would have.
+Full flags and behavior: [COMMANDS.md](COMMANDS.md).
 
 ## The board
 
@@ -186,6 +126,8 @@ new → ranked → applied → screening → tech_interview → final_round → 
                                                     ↘ rejected · skipped
 ```
 
+`outcome` is a combinable array, not a single value. Going quiet after the technical interview is `["ghosted", "failed_tech"]`, which three separate status columns could never have said.
+
 **Nothing is fabricated.** Three sources ground every draft: `01-candidate-profile.md`, the master CV, and the profile block in `CLAUDE.md`. A claim supported by none of them is removed before the file is written, which is also why a fact you confirm in conversation gets written back to the profile in the same turn.
 
 ## Repo layout
@@ -214,7 +156,7 @@ crocthejob/
 
 ## Contributing
 
-Issues and PRs welcome. Run the four checks in **Verify the install** above before opening one.
+Issues and PRs welcome. Run the checks in [SETUP.md](SETUP.md) before opening one.
 
 Market-specific portal skills belong in your own fork rather than here, which is what `/add-portal` is for. Improvements to the generator itself are very welcome.
 
